@@ -8,4 +8,4 @@ Route::get('/', function () {
 });
 
 
-Route::get('/users', [UserController::class, 'getAllData'])->name('users.getAllData');
+// Route::get('/users', [UserController::class, 'getAllData'])->name('users.getAllData');
