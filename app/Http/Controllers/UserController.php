@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as Response;
 
@@ -120,4 +121,45 @@ class UserController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function register(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'fullname' => 'required|string',
+                'no_handphone' => 'nullable|string',
+                'email' => 'nullable|email:rfc,dns',
+                'password' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    "status" => "failed",
+                    "message" => "Gagal melakukan validasi tipe data user",
+                    "errors" => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            } else {
+                DB::beginTransaction();
+                $validated = $validator->validated();
+
+                $validated['email'] = $validated['email'] ?? null;
+
+                $user = User::create($validated);
+
+                DB::commit();
+                return response()->json([
+                    "status" => "success",
+                    "message" => "Data user berhasil ditambahkan",
+                    "data" => $user
+                ], Response::HTTP_CREATED);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
