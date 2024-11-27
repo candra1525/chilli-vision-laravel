@@ -4,7 +4,10 @@
     "functions": {
         "api/index.php": { "runtime": "vercel-php@0.7.1" }
     },
-    "routes": [{ "src": "/(.*)", "dest": "/api/index.php" }],
+    "routes": [
+        { "src": "/build/(.*)", "dest": "/public/build/" },
+        { "src": "/(.*)", "dest": "/api/index.php" }
+    ],
     "public": true,
     "buildCommand": "vite build",
     "outputDirectory": "public",
@@ -26,6 +29,7 @@
         "DB_HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
         "DB_PORT": "6543",
         "DB_DATABASE": "postgres",
-        "DB_USERNAME": "postgres.vpzxistnisasqvuvtxho"
+        "DB_USERNAME": "postgres.vpzxistnisasqvuvtxho",
+        "DB_PASSWORD": "sNhwBVEy07ZpKVLO"
     }
 }
