@@ -11,7 +11,7 @@
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
-        "APP_URL": "https://chilli-vision-laravel.vercel.app/",
+        "APP_URL": "https://chilli-vision-laravel.vercel.app",
         "APP_KEY": "base64:/0m64LxEaRGMBQ+lyoG3RgKJHvWpBMIRHYjS2XbZq5s=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
