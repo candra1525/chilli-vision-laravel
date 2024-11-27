@@ -9,5 +9,3 @@ Route::get('/', function () {
 
 
 Route::get('/users', [UserController::class, 'getAllData'])->name('users.getAllData');
-
-require __DIR__ . '/auth.php';
