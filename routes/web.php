@@ -1,7 +1,13 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+
+Route::get('/users', [UserController::class, 'getAllData'])->name('users.getAllData');
+
+require __DIR__ . '/auth.php';

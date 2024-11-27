@@ -29,6 +29,11 @@ class UserController extends Controller
         }
     }
 
+    public function getAllData()
+    {
+        return User::all();
+    }
+
     /**
      * Store a newly created resource in storage.
      */
