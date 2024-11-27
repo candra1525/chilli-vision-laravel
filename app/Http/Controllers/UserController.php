@@ -125,36 +125,46 @@ class UserController extends Controller
     public function register(Request $request)
     {
         try {
+            DB::beginTransaction();
+        
             $validator = Validator::make($request->all(), [
                 'fullname' => 'required|string',
-                'no_handphone' => 'nullable|string',
                 'email' => 'nullable|email:rfc,dns',
+                'no_handphone' => 'nullable|string',
                 'password' => 'required|string',
             ]);
-
+        
             if ($validator->fails()) {
                 return response()->json([
                     "status" => "failed",
                     "message" => "Gagal melakukan validasi tipe data user",
                     "errors" => $validator->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            } else {
-                DB::beginTransaction();
-                $validated = $validator->validated();
-
-                $validated['email'] = $validated['email'] ?? null;
-
-                $user = User::create($validated);
-
-                DB::commit();
-                return response()->json([
-                    "status" => "success",
-                    "message" => "Data user berhasil ditambahkan",
-                    "data" => $user
-                ], Response::HTTP_CREATED);
             }
+        
+            $validated = $validator->validated();
+        
+            // Log data sebelum query
+            // \Log::info('Data yang divalidasi:', $validated);
+        
+            $validated['email'] = $validated['email'] ?? null;
+            $validated['password'] = bcrypt($validated['password']); // Enkripsi password
+        
+            $user = User::create($validated);
+        
+            DB::commit();
+        
+            return response()->json([
+                "status" => "success",
+                "message" => "Data user berhasil ditambahkan",
+                "data" => $user
+            ], Response::HTTP_CREATED);
+        
         } catch (\Exception $e) {
             DB::rollBack();
+        
+            // \Log::error('Terjadi error saat registrasi user:', ['error' => $e->getMessage()]);
+        
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()
