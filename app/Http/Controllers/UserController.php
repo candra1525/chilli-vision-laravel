@@ -10,9 +10,7 @@ use Symfony\Component\HttpFoundation\Response as Response;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // All User
     public function index()
     {
         try{
@@ -30,38 +28,155 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
+    // Detail Account
     public function show(string $id)
     {
-        //
+        try{
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+
+            $user = User::where('id', $validated['id'] )->first();
+            if(!$user){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User found',
+                'data' => $user
+            ], Response::HTTP_OK);
+        }
+        catch(\Exception $e){
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    // Update Account
     public function update(Request $request, string $id)
     {
-        //
+        try{
+            DB::beginTransaction();
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $user = User::where('id', $validated['id'])->first();
+
+            if(!$user){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $validate2 = Validator::make($request->all(), [
+                'fullname' => 'required|string',
+                'email' => 'nullable|email:rfc,dns',
+                'no_handphone' => 'nullable|string',
+            ]);
+
+            if($validate2->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate2->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated2 = $validate2->validated();
+            $validated2['email'] = $validated2['email'] ?? null;
+
+            $user->update($validated2);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User has been updated',
+                'data' => $user
+            ], Response::HTTP_OK);
+        }
+        catch(\Exception $e){
+            DB::rollBack();
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    // Remove Account
     public function destroy(string $id)
     {
-        //
+        try{
+            DB::beginTransaction();
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $user = User::where('id', $validated['id'])->first();
+
+            if(!$user){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $user->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User has been deleted'
+            ], Response::HTTP_OK);
+        }
+        catch(\Exception $e){
+            DB::rollBack();
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
+    // Login
     public function login(Request $request)
     {
         try {
@@ -122,6 +237,7 @@ class UserController extends Controller
         }
     }
 
+    // Register 
     public function register(Request $request)
     {
         try {
@@ -143,13 +259,8 @@ class UserController extends Controller
             }
         
             $validated = $validator->validated();
-        
-            // Log data sebelum query
-            // \Log::info('Data yang divalidasi:', $validated);
-        
             $validated['email'] = $validated['email'] ?? null;
-            $validated['password'] = bcrypt($validated['password']); // Enkripsi password
-        
+            $validated['password'] = bcrypt($validated['password']);
             $user = User::create($validated);
         
             DB::commit();
@@ -162,9 +273,7 @@ class UserController extends Controller
         
         } catch (\Exception $e) {
             DB::rollBack();
-        
-            // \Log::error('Terjadi error saat registrasi user:', ['error' => $e->getMessage()]);
-        
+
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()
@@ -172,4 +281,70 @@ class UserController extends Controller
         }
     }
 
+    // Change Password
+    public function changePassword(Request $request, string $id)
+    {
+        try{
+            DB::beginTransaction();
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Gagal melakukan validasi tipe data user',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $user = User::where('id', $validated['id'])->first();
+
+            if(!$user){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $validate2 = Validator::make($request->all(), [
+                'old_password' => 'required|string',
+                'password' => 'required|string'
+            ]);
+
+            if($validate2->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate2->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated2 = $validate2->validated();
+
+            if(!password_verify($validated2['old_password'], $user->password)){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Old password is wrong'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $user->password = bcrypt($validated2['password']);
+            $user->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Password has been changed'
+            ], Response::HTTP_OK);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    } 
 }
