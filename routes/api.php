@@ -27,6 +27,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         // Change Password
         Route::put('/change-password/{id}', [UserController::class, 'changePassword']);
+
+        // Logout
+        Route::post('/logout', [UserController::class, 'logout']);
     });
 
     // History (Controller Pending)
@@ -44,7 +47,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/create-history', [HistoryController::class, 'store']);
 
         // Update History
-        Route::put('/update-history/{id}', [HistoryController::class, 'update']);
+        // Route::put('/update-history/{id}', [HistoryController::class, 'update']);
 
         // Delete History
         Route::delete('/delete-history/{id}', [HistoryController::class, 'destroy']);
