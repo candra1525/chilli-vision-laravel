@@ -14,7 +14,9 @@ class HistoryController extends Controller
     public function index()
     {
         try{
+            $supabase = new SupabaseService();
             $history = History::all();
+            $history->url_image = $supabase->getHistoryImage($history->image);
 
             return response()->json([
                 'status' => 'success',
@@ -30,15 +32,15 @@ class HistoryController extends Controller
         }
     }
 
-    // Save History No Image
+    // Save History 
     public function store(Request $request)
     {
         try{
             DB::beginTransaction();
 
             $validate = Validator::make($request->all(), [
-                'title' => 'required|string',
-                'image' => 'string|nullable',
+                'title' => 'required|string|max:100',
+                'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'description' => 'required|string',
                 'user_id' => 'required|exists:users,id|string',
             ]);
@@ -53,12 +55,26 @@ class HistoryController extends Controller
 
             $validated = $validate->validated();
 
-            $history = History::create([
-                'title' => $validated['title'],
-                'image' => $validated['image'] ?? null,
-                'description' => $validated['description'],
-                'user_id' => $validated['user_id']
-            ]);
+            $history = new History();
+            $history->title = $validated['title'];
+            $file = $request->file('image');
+            $filename = 'history_' . time() . '.' . $file->getClientOriginalExtension();
+            $supabase = new SupabaseService();
+            $response = $supabase->uploadImageHistory($file, $filename);
+
+            if(isset($response['error'])){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to upload image',
+                    'error' => $response['error']
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $history->image = $filename;
+            $history->description = $validated['description'];
+            $history->user_id = $validated['user_id'];
+
+            $history->save();
 
             DB::commit();
 
@@ -97,6 +113,9 @@ class HistoryController extends Controller
 
             $history = History::where('id', $validated['id'])->first();
             if(!$history){
+                $supabase = new SupabaseService();
+                $history->url_image = $supabase->getHistoryImage($history->image);
+
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'History not found'
@@ -134,7 +153,13 @@ class HistoryController extends Controller
             }
 
             $validated = $validate->validated();
+            $supabase = new SupabaseService();
+
             $history = History::where('user_id', $validated['id'])->get();
+
+            foreach($history as $h){
+                $h->url_image = $supabase->getHistoryImage($h->image);
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -195,116 +220,6 @@ class HistoryController extends Controller
             ], 500);
         }
     }
-
-
-    // Save History with Image
-    // public function storeWithImage(Request $request)
-    // {
-    //     try{
-    //         DB::beginTransaction();
-
-    //         $validate = Validator::make($request->all(), [
-    //             'title' => 'required|string',
-    //             'image' => 'required|image',
-    //             'description' => 'required|string',
-    //             'user_id' => 'required|exists:users,id|string',
-    //         ]);
-
-    //         if($validate->fails()){
-    //             return response()->json([
-    //                 'status' => 'failed',
-    //                 'message' => 'Failed to validate history data',
-    //                 'error' => $validate->errors()
-    //             ], Response::HTTP_UNPROCESSABLE_ENTITY);
-    //         }
-
-    //         $validated = $validate->validated();
-
-    //         $image = $request->file('image');
-    //         $image->storeAs('public/images', $image->hashName());
-
-    //         $history = History::create([
-    //             'title' => $validated['title'],
-    //             'image' => $image->hashName(),
-    //             'description' => $validated['description'],
-    //             'user_id' => $validated['user_id']
-    //         ]);
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'message' => 'History saved successfully',
-    //             'data' => $history
-    //         ], Response::HTTP_CREATED);
-    //     }
-    //     catch(\Exception $e){
-    //         DB::rollBack();
-    //         return response()->json([
-    //             'message' => 'Failed to save history',
-    //             'error' => $e->getMessage()
-    //         ], Response::HTTP_INTERNAL_SERVER_ERROR);
-    //     }
-    // }
-
-    // public function storeWithCustomImageName(Request $request)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         $validate = Validator::make($request->all(), [
-    //             'title' => 'required|string',
-    //             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    //             'description' => 'required|string',
-    //             'user_id' => 'required|exists:users,id',
-    //         ]);
-
-    //         if ($validate->fails()) {
-    //             return response()->json([
-    //                 'status' => 'failed',
-    //                 'message' => 'Failed to validate history data',
-    //                 'error' => $validate->errors()
-    //             ], Response::HTTP_UNPROCESSABLE_ENTITY);
-    //         }
-
-    //         $validated = $validate->validated();
-
-    //         // Dapatkan file gambar dari request
-    //         $image = $request->file('image');
-
-    //         // Tentukan nama file baru, misalnya menggunakan title dan user_id
-    //         $newFileName = Str::slug($validated['title']) . '-' . $validated['user_id'] . '.' . $image->getClientOriginalExtension();
-
-    //         // Simpan file dengan nama baru ke folder storage
-    //         $image->storeAs('public/images', $newFileName);
-
-    //         // Simpan data history ke database
-    //         $history = History::create([
-    //             'title' => $validated['title'],
-    //             'image' => $newFileName,
-    //             'description' => $validated['description'],
-    //             'user_id' => $validated['user_id']
-    //         ]);
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'message' => 'History saved successfully',
-    //             'data' => [
-    //                 'history' => $history,
-    //                 'image_url' => Storage::url('images/' . $newFileName)
-    //             ]
-    //         ], Response::HTTP_CREATED);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error('Failed to save history', ['error' => $e->getMessage()]);
-    //         return response()->json([
-    //             'message' => 'Failed to save history',
-    //             'error' => $e->getMessage()
-    //         ], Response::HTTP_INTERNAL_SERVER_ERROR);
-    //     }
-    // }
 
 
      // Update History (Rarely Used)

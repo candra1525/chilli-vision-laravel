@@ -96,9 +96,9 @@ class UserController extends Controller
             }
 
             $validate2 = Validator::make($request->all(), [
-                'fullname' => 'required|string',
+                'fullname' => 'required|string|max:55',
                 'email' => 'nullable|email:rfc,dns',
-                'no_handphone' => 'nullable|string',
+                'no_handphone' => 'nullable|string|max:13',
             ]);
 
             if($validate2->fails()){
@@ -244,10 +244,10 @@ class UserController extends Controller
             DB::beginTransaction();
         
             $validator = Validator::make($request->all(), [
-                'fullname' => 'required|string',
+                'fullname' => 'required|string|max:55',
                 'email' => 'nullable|email:rfc,dns',
-                'no_handphone' => 'nullable|string',
-                'password' => 'required|string',
+                'no_handphone' => 'nullable|string|max:13',
+                'password' => 'required|string|max:20',
             ]);
         
             if ($validator->fails()) {
@@ -310,7 +310,7 @@ class UserController extends Controller
 
             $validate2 = Validator::make($request->all(), [
                 'old_password' => 'required|string',
-                'password' => 'required|string'
+                'password' => 'required|string|max:20',
             ]);
 
             if($validate2->fails()){

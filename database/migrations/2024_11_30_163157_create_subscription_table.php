@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('history', function (Blueprint $table) {
+        Schema::create('subscription', function (Blueprint $table) {
             $table->id();
             $table->string('title', 100);
-            $table->string('image')->nullable();
-            $table->text('description');
+            $table->string('image_transaction');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->tinyInteger('status')->default(0);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('history');
+        Schema::dropIfExists('subscription');
     }
 };
