@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,22 +36,22 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     // History 
     Route::prefix('history')->group(function () {
         // Get All History
-        Route::get('/all-history', [HistoryController::class, 'index']);
+        Route::get('/all', [HistoryController::class, 'index']);
 
         // Get History By User ID
         Route::get('/history-by-user/{idUser}', [HistoryController::class, 'showHistoryUserById']);
 
         // Get History By ID
-        Route::get('/detail-history/{id}', [HistoryController::class, 'show']);
+        Route::get('/detail/{id}', [HistoryController::class, 'show']);
 
         // Create History
-        Route::post('/create-history', [HistoryController::class, 'store']);
+        Route::post('/create', [HistoryController::class, 'store']);
 
         // Update History
         // Route::put('/update-history/{id}', [HistoryController::class, 'update']);
 
         // Delete History
-        Route::delete('/delete-history/{id}', [HistoryController::class, 'destroy']);
+        Route::delete('/delete/{id}', [HistoryController::class, 'destroy']);
     });
 
     // Subscription
@@ -58,13 +59,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Get All Subscription
         Route::get('/all', [SubscriptionController::class, 'index']);
 
-        // Show Detail User Subscription
+        // Show Detail User Subscription id -> user
         Route::get('/detail/{id}', [SubscriptionController::class, 'show']);
 
         // Create Subscription
         Route::post('/create', [SubscriptionController::class, 'store']);
 
-        // Update Status Subscription
+        // Update Status Subscription id -> subs
         Route::put('/update-status/{id}', [SubscriptionController::class, 'updateStatus']);
 
         // Delete Subscription

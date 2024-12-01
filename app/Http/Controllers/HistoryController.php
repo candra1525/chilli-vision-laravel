@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as Response;
+use App\Services\SupabaseService;
 
 class HistoryController extends Controller
 {
@@ -16,7 +17,9 @@ class HistoryController extends Controller
         try{
             $supabase = new SupabaseService();
             $history = History::all();
-            $history->url_image = $supabase->getHistoryImage($history->image);
+            foreach($history as $h){
+                $h->url_image = $supabase->getImageHistory($h->image);
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -32,10 +35,9 @@ class HistoryController extends Controller
         }
     }
 
-    // Save History 
     public function store(Request $request)
     {
-        try{
+        try {
             DB::beginTransaction();
 
             $validate = Validator::make($request->all(), [
@@ -45,28 +47,33 @@ class HistoryController extends Controller
                 'user_id' => 'required|exists:users,id|string',
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Failed to validate history data',
-                    'error' => $validate->errors()
+                    'error' => $validate->errors(),
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
+            
             $validated = $validate->validated();
+            \Log::info('Validation passed:', $validated);
 
             $history = new History();
             $history->title = $validated['title'];
+
             $file = $request->file('image');
             $filename = 'history_' . time() . '.' . $file->getClientOriginalExtension();
+
             $supabase = new SupabaseService();
             $response = $supabase->uploadImageHistory($file, $filename);
 
-            if(isset($response['error'])){
+            \Log::info('Supabase upload response:', ['response' => $response]);
+
+            if (isset($response['error'])) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Failed to upload image',
-                    'error' => $response['error']
+                    'error' => $response['error'],
                 ], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
@@ -76,22 +83,28 @@ class HistoryController extends Controller
 
             $history->save();
 
+            $history->url_image = $response['url_image'];
+            \Log::info('History saved:', $history->toArray());
+
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'History saved successfully',
-                'data' => $history
+                'data' => $history->toArray(),
             ], Response::HTTP_CREATED);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error in storing history:', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'message' => 'Failed to save history',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     // Show History by Id User
     public function show(string $id)
@@ -112,10 +125,10 @@ class HistoryController extends Controller
             $validated = $validate->validated();
 
             $history = History::where('id', $validated['id'])->first();
+            $supabase = new SupabaseService();  
+            $history->url_image = $supabase->getImageHistory($history->image);
+            
             if(!$history){
-                $supabase = new SupabaseService();
-                $history->url_image = $supabase->getHistoryImage($history->image);
-
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'History not found'
@@ -158,7 +171,7 @@ class HistoryController extends Controller
             $history = History::where('user_id', $validated['id'])->get();
 
             foreach($history as $h){
-                $h->url_image = $supabase->getHistoryImage($h->image);
+                $h->url_image = $supabase->getImageHistory  ($h->image);
             }
 
             return response()->json([

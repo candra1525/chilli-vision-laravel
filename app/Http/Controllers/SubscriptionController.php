@@ -7,31 +7,45 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as Response;
+use App\Services\SupabaseService;
 
 class SubscriptionController extends Controller
 {
     // All Data Subscription
     public function index()
     {
-        try{
-            // Custom Return Subscription
+        try {
             $supabase = new SupabaseService();
-            $subs = Subscription::all();
-            $subs->url_image = $supabase->getSubscriptionImage($subs->image_transaction);
-
+            $subs = Subscription::all(); // Mengambil semua data
+    
+            // Jika $subs kosong
+            if ($subs->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data Null',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+    
+            // Iterasi setiap data pada koleksi
+            foreach ($subs as $s) {
+                // Mengakses atribut image_transaction pada setiap item
+                $s->url_image = $supabase->getImageSubscription($s->image_transaction);
+            }
+    
             return response()->json([
                 'status' => 'success',
                 'message' => 'Data retrieved successfully',
                 'data' => $subs
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error: '.$e->getMessage()
+                'message' => 'Error: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    
 
     // Buy Subscription
     public function store(Request $request)
@@ -39,7 +53,7 @@ class SubscriptionController extends Controller
         try{
             DB::beginTransaction();
 
-            $validate_subs = Validator::make($request->all(), [
+            $validate = Validator::make($request->all(), [
                 'title' => 'required|string|max:100',
                 'image_transaction' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'start_date' => 'required|date',
@@ -47,21 +61,29 @@ class SubscriptionController extends Controller
                 'user_id' => 'required|exists:users,id'
             ]);
 
-            $validated_subs = $validate_subs->validated();
-
-            if($validate_subs->fails()){
+            if($validate->fails()){
                 return response()->json([
-                    'status' => 'error',
-                    'message' => $validate_subs->errors()
-                ], Response::HTTP_BAD_REQUEST);
+                    'status' => 'failed',
+                    'message' => 'Failed to validate history data',
+                    'error' => $validate->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
+            $validated = $validate->validated();
+
+
             $subs = new Subscription();
-            $subs->title = $validated_subs['title'];
+            $subs->title = $validated['title'];
+
             $file = $request->file('image_transaction');
             $filename = 'transaction_'.time().'.'.$file->getClientOriginalExtension();
+
+         
             $supabase = new SupabaseService();
             $response = $supabase->uploadImageSubscription($file, $filename);
+
+            \Log::info('Supabase upload response:', ['response' => $response['url_image']]);
+
             if(isset($response['error'])){
                 return response()->json([
                     'status' => 'error',
@@ -69,18 +91,23 @@ class SubscriptionController extends Controller
                 ], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
             $subs->image_transaction = $filename;
-            $subs->start_date = $validated_subs['start_date'];
-            $subs->end_date = $validated_subs['end_date'];
-            $subs->status = 0;
-            $subs->user_id = $validated_subs['user_id'];
 
+            $subs->start_date = $validated['start_date'];
+            $subs->end_date = $validated['end_date'];
+            $subs->status = 0;
+            $subs->user_id = $validated['user_id'];
+            
             $subs->save();
+
+            $subs->image_url = $response['url_image'];
+            \Log::info('Subscription saved:', $subs->toArray());
             
             DB::commit();
             
             return response()->json([
                 'status' => 'success',
-                'message' => 'Data saved successfully'
+                'message' => 'Data saved successfully',
+                'data' => $subs->toArray(),
             ], Response::HTTP_CREATED);
         }
         catch(\Exception $e){
@@ -96,37 +123,38 @@ class SubscriptionController extends Controller
     public function show(string $id)
     {
         try{
-            $validate_id = Validator::make(['id' => $id], [
+            $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:subscription,id'
             ]);
 
-            $validated_id = $validate_id->validated();
-
-            if($validate_id->fails()){
+            if($validate->fails()){
                 return response()->json([
-                    'status' => 'error',
-                    'message' => $validate_id->errors()
-                ], Response::HTTP_BAD_REQUEST);
+                    'status' => 'failed',
+                    'message' => 'Failed to validate subscription data',
+                    'error' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $subs = Subscription::where('id', $validated_id['id'])->first();
+            $validated = $validate->validated();
+
+            $subs = Subscription::where('id', $validated['id'])->first();
+            $supabase = new SupabaseService();
+            $subs->url_image = $supabase->getImageSubscription($subs->image_transaction);
             
-            if($subs){
-                $supabase = new SupabaseService();
-                $subs->url_image = $supabase->getSubscriptionImage($subs->image_transaction);
-
+            if(!$subs){
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'Data retrieved successfully',
-                    'data' => $subs
-                ], Response::HTTP_OK);
-            }
-            else{
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Data not found'
+                    'status' => 'failed',
+                    'message' => 'Subscription not found'
                 ], Response::HTTP_NOT_FOUND);
             }
+          
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data retrieved successfully',
+                'data' => $subs
+            ], Response::HTTP_OK);
+            
+        
         }
         catch(\Exception $e){
             return response()->json([
@@ -165,7 +193,8 @@ class SubscriptionController extends Controller
                 $subs->save();
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Data updated successfully'
+                    'message' => 'Data updated successfully',
+                    'data' => $subs
                 ], Response::HTTP_OK);
             }
             else{
@@ -192,7 +221,8 @@ class SubscriptionController extends Controller
                 $subs->delete();
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Data deleted successfully'
+                    'message' => 'Data deleted successfully',
+                    'data' => $subs
                 ], Response::HTTP_OK);
             }
             else{

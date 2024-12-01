@@ -1,10 +1,14 @@
+<?php
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SupabaseService
 {
    protected $url;
+   protected $key;
    protected $bucket_subscription;
    protected $bucket_history;
    
@@ -13,24 +17,36 @@ class SupabaseService
        $this->url = env('SUPABASE_URL');
        $this->bucket_subscription = env('SUPABASE_BUCKET_SUBSCRIPTION');
        $this->bucket_history = env('SUPABASE_BUCKET_HISTORY');
+       $this->key = env('SUPABASE_API_KEY');
    }
 
    public function uploadImageSubscription($file, $filename){
+      $baseUrl = $this->url;
       $path = "{$this->bucket_subscription}/{$filename}";
-      try{
+
+      Log::info('Path:', ['path' => $path]);
+
+
+      try {
+         if (!$baseUrl) {
+               throw new \Exception('Base URL for Supabase is not configured.');
+         }
+
          $response = Http::withHeaders([
-               'Content-Type' => 'multipart/form-data', 
-         ])->post("{$this->url}/storage/v1/object/public/{$path}", [
-               'file' => fopen($file->getPathname(), 'r'),
-         ]);
+               'Authorization' => 'Bearer '.$this->key, 
+         ])->attach(
+               'file', file_get_contents($file->getRealPath()), $filename
+         )->post("{$baseUrl}/storage/v1/object/{$path}");
+
+         \Log::info('Supabase Response:', ['response' => $response->body()]);
 
          if ($response->failed()) {
                throw new \Exception('Error uploading file: ' . $response->body());
          }
-
-         return $response->json();
-      }
-      catch(\Exception $e){
+         $image = "{$baseUrl}/storage/v1/object/{$path}";
+         return ['url_image' => $image];
+      } catch (\Exception $e) {
+         \Log::error('Error uploading to Supabase:', ['message' => $e->getMessage()]);
          throw new \Exception($e->getMessage());
       }
    }
@@ -40,25 +56,39 @@ class SupabaseService
      return "{$this->url}/storage/v1/object/public/{$this->bucket_subscription}/{$fileName}";
    }
 
-   public function uploadImageHistory(){
+   public function uploadImageHistory($file, $filename)
+   {
+      $baseUrl = $this->url;
       $path = "{$this->bucket_history}/{$filename}";
-      try{
+
+      try {
+         // Pastikan base URL sudah diatur
+         if (!$baseUrl) {
+               throw new \Exception('Base URL for Supabase is not configured.');
+         }
+
          $response = Http::withHeaders([
-               'Content-Type' => 'multipart/form-data', 
-         ])->post("{$this->url}/storage/v1/object/public/{$path}", [
-               'file' => fopen($file->getPathname(), 'r'),
-         ]);
+               'Authorization' => 'Bearer '.$this->key, 
+         ])->attach(
+               'file', file_get_contents($file->getRealPath()), $filename
+         )->post("{$baseUrl}/storage/v1/object/{$path}");
+
+         // Log respons dari Supabase
+         \Log::info('Supabase Response:', ['response' => $response->body()]);
 
          if ($response->failed()) {
                throw new \Exception('Error uploading file: ' . $response->body());
          }
 
-         return $response->json();
-      }
-      catch(\Exception $e){
+         $image = "{$baseUrl}/storage/v1/object/{$path}";
+         return ['url_image' => $image];
+         
+      } catch (\Exception $e) {
+         \Log::error('Error uploading to Supabase:', ['message' => $e->getMessage()]);
          throw new \Exception($e->getMessage());
       }
    }
+
 
    public function getImageHistory($fileName)
    {
