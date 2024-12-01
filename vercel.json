@@ -30,6 +30,9 @@
         "DB_PORT": "6543",
         "DB_DATABASE": "postgres",
         "DB_USERNAME": "postgres.vpzxistnisasqvuvtxho",
-        "DB_PASSWORD": "sNhwBVEy07ZpKVLO"
+        "DB_PASSWORD": "sNhwBVEy07ZpKVLO",
+        "SUPABASE_URL": "https://vpzxistnisasqvuvtxho.supabase.co",
+        "SUPABASE_BUCKET_HISTORY": "history_image",
+        "SUPABASE_BUCKET_SUBSCRIPTION": "transaction_subscription"
     }
 }
