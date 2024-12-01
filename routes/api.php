@@ -32,7 +32,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/logout', [UserController::class, 'logout']);
     });
 
-    // History (Controller Pending)
+    // History 
     Route::prefix('history')->group(function () {
         // Get All History
         Route::get('/all-history', [HistoryController::class, 'index']);
@@ -52,4 +52,23 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Delete History
         Route::delete('/delete-history/{id}', [HistoryController::class, 'destroy']);
     });
+
+    // Subscription
+    Route::prefix('subscription')->group(function () {
+        // Get All Subscription
+        Route::get('/all', [SubscriptionController::class, 'index']);
+
+        // Show Detail User Subscription
+        Route::get('/detail/{id}', [SubscriptionController::class, 'show']);
+
+        // Create Subscription
+        Route::post('/create', [SubscriptionController::class, 'store']);
+
+        // Update Status Subscription
+        Route::put('/update-status/{id}', [SubscriptionController::class, 'updateStatus']);
+
+        // Delete Subscription
+        Route::delete('/delete/{id}', [SubscriptionController::class, 'destroy']);
+    });
+
 });
