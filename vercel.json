@@ -2,10 +2,9 @@
     "version": 2,
     "framework": null,
     "functions": {
-        "api/index.php": { "runtime": "vercel-php@0.7.1" }
+        "api/index.php": { "runtime": "verc el-php@0.7.1" }
     },
     "routes": [
-        { "src": "/build/(.*)", "dest": "/public/build/" },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ],
     "public": true,
@@ -15,7 +14,6 @@
         "APP_ENV": "production",
         "APP_DEBUG": "false",
         "APP_URL": "https://chilli-vision-laravel.vercel.app",
-        "APP_KEY": "base64:/0m64LxEaRGMBQ+lyoG3RgKJHvWpBMIRHYjS2XbZq5s=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
         "APP_PACKAGES_CACHE": "/tmp/packages.php",
@@ -24,17 +22,6 @@
         "VIEW_COMPILED_PATH": "/tmp",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie",
-        "DB_CONNECTION": "pgsql",
-        "DB_HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
-        "DB_PORT": "6543",
-
-        "DB_DATABASE": "postgres",
-        "DB_USERNAME": "postgres.vpzxistnisasqvuvtxho",
-        "DB_PASSWORD": "sNhwBVEy07ZpKVLO",
-        "SUPABASE_URL": "https://vpzxistnisasqvuvtxho.supabase.co",
-        "SUPABASE_BUCKET_HISTORY": "history-image",
-        "SUPABASE_BUCKET_SUBSCRIPTION": "transaction-subscription",
-        "SUPABASE_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwenhpc3RuaXNhc3F2dXZ0eGhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwMTc1NDAsImV4cCI6MjA0ODU5MzU0MH0.fj1gx-PQTF1MgcBnF0tZqXZKIKvJP64FG7FeOu6zxWA"
+        "SESSION_DRIVER": "cookie"
     }
 }
