@@ -257,8 +257,6 @@ class UserController extends Controller
                     "errors" => $validator->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
-          
         
             $validated = $validator->validated();
 
@@ -269,7 +267,7 @@ class UserController extends Controller
                     'message' => 'No handphone telah terdaftar sebelumnya'
                 ], Response::HTTP_CONFLICT);
             }
-            
+
             $validated['email'] = $validated['email'] ?? null;
             $validated['password'] = bcrypt($validated['password']);
             $user = User::create($validated);

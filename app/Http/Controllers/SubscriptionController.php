@@ -239,4 +239,45 @@ class SubscriptionController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    // List Subs User ID
+    public function listSubsUser(string $id)
+    {
+        try{
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validate->errors()
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $validated = $validate->validated();
+
+            // Descending berdasarkan created_at
+            $subs = Subscription::where('user_id', $validated['id'])->orderBy('created_at', 'desc')->get();
+
+            if($subs->isEmpty()){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data Langganan Kosong'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data retrieved successfully',
+                'data' => $subs
+            ], Response::HTTP_OK);
+        }
+        catch(\Exception $e){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: '.$e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

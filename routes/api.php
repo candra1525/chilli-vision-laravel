@@ -70,6 +70,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         // Delete Subscription
         Route::delete('/delete/{id}', [SubscriptionController::class, 'destroy']);
+
+        // Get Subscription By User ID
+        Route::get('/user/{idUser}', [SubscriptionController::class, 'listSubsUser']);
     });
 
 });
