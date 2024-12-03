@@ -257,8 +257,19 @@ class UserController extends Controller
                     "errors" => $validator->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
+
+          
         
             $validated = $validator->validated();
+
+            $searchNoHandphone = User::where('no_handphone', $validated['no_handphone'])->first();
+            if($searchNoHandphone){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'No handphone telah terdaftar sebelumnya'
+                ], Response::HTTP_CONFLICT);
+            }
+            
             $validated['email'] = $validated['email'] ?? null;
             $validated['password'] = bcrypt($validated['password']);
             $user = User::create($validated);
