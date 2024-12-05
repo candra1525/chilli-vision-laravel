@@ -46,12 +46,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         // Create History
         Route::post('/create', [HistoryController::class, 'store']);
-
-        // Update History
-        // Route::put('/update-history/{id}', [HistoryController::class, 'update']);
-
+        
         // Delete History
         Route::delete('/delete/{id}', [HistoryController::class, 'destroy']);
+
+        // Count History
+        Route::get('/count/{idUser}', [HistoryController::class, 'countHistory']);
+        
+        // Update History
+        // Route::put('/update-history/{id}', [HistoryController::class, 'update']);
     });
 
     // Subscription

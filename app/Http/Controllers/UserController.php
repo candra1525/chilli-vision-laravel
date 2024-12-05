@@ -98,7 +98,7 @@ class UserController extends Controller
             $validate2 = Validator::make($request->all(), [
                 'fullname' => 'required|string|max:55',
                 'email' => 'nullable|email:rfc,dns',
-                'no_handphone' => 'nullable|string|max:13',
+                'no_handphone' => 'required|string|max:13',
             ]);
 
             if($validate2->fails()){

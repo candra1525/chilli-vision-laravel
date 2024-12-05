@@ -235,6 +235,48 @@ class HistoryController extends Controller
     }
 
 
+    // Check how much history data is stored
+    public function countHistory(string $idUser){
+        try{
+            $validate = Validator::make(['id' => $idUser], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if($validate->fails()){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'error' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $history = History::where('user_id', $validated['id'])->count();
+
+            // Jika Id user tidak ditemukan 
+            if(!$history){
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'History not found',
+                    'data' => 0
+                ], Response::HTTP_OK);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'History data by user id',
+                'data' => $history
+            ], Response::HTTP_OK);
+        }
+        catch(\Exception $e){
+            return response()->json([
+                'message' => 'Failed to get history',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
      // Update History (Rarely Used)
     // public function update(Request $request, string $id)
     // {
