@@ -72,7 +72,6 @@ class UsersController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            DB::beginTransaction();
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:users,id'
             ]);
@@ -86,6 +85,8 @@ class UsersController extends Controller
             }
 
             $validated = $validate->validated();
+
+            DB::beginTransaction();
             $user = User::where('id', $validated['id'])->first();
 
             if (!$user) {
@@ -111,11 +112,15 @@ class UsersController extends Controller
 
             $validated2 = $validate2->validated();
 
+            $supabase = new SupabaseService();
+            $filename = $user->image;
+            $response = ['url_image' => $supabase->getImageUser($filename)];
+
             // image
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
-                $supabase = new SupabaseService();
+
                 $response = $supabase->uploadImageUser($file, $filename);
 
                 if (isset($response['error'])) {
@@ -125,10 +130,14 @@ class UsersController extends Controller
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
 
-                $validated2['image'] = $supabase->getImageUser($filename);
+                $user->image = $filename;
+                $user->image_url = $response['url_image'];
             }
 
-            $user->update($validated2);
+            $user->fullname = $validated2['fullname'] ?? $user->fullname;
+            $user->no_handphone = $validated2['no_handphone'] ?? $user->no_handphone;
+
+            $user->save();
 
             DB::commit();
 
