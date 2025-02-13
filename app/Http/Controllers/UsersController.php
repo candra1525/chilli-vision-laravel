@@ -131,13 +131,13 @@ class UsersController extends Controller
                 }
 
                 $user->image = $filename;
-                $user->image_url = $response['url_image'];
             }
 
             $user->fullname = $validated2['fullname'] ?? $user->fullname;
             $user->no_handphone = $validated2['no_handphone'] ?? $user->no_handphone;
 
             $user->save();
+            $user->image_url = $response['url_image'];
 
             DB::commit();
 

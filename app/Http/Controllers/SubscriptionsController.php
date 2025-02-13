@@ -211,7 +211,7 @@ class SubscriptionsController extends Controller
                     }
 
                     $subs->image_subscriptions = $filename;
-                    $subs->image_url = $response['url_image'];
+                    // $subs->image_url = $response['url_image'];
                 }
 
                 $subs->title = $validated['title'] ?? $subs->title;

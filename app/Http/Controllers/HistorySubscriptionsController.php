@@ -228,7 +228,7 @@ class HistorySubscriptionsController extends Controller
                     }
 
                     $hs->image_transaction = $filename;
-                    $hs->image_url = $response['url_image'];
+                    // $hs->image_url = $response['url_image'];
                 }
 
                 $hs->start_date = $validated['start_date'] ?? $hs->start_date;
