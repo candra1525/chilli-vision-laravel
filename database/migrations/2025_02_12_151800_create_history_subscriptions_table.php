@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subscription', function (Blueprint $table) {
-            $table->id();
-            $table->string('title', 100);
-            $table->string('image_transaction');
+        Schema::create('history_subscriptions', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             $table->date('start_date');
             $table->date('end_date');
-            $table->tinyInteger('status')->default(0);
+            $table->enum('status', ['active', 'pending', 'expired', 'cancel'])->default('pending');
+            $table->string('payment_method')->nullable()->default('transfer');
+            $table->string('image_transaction')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subscription');
+        Schema::dropIfExists('history_subscriptions');
     }
 };

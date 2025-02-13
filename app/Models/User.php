@@ -13,8 +13,9 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
     protected $primaryKey = 'id';
-    protected $table = 'users';
+    public $incrementing = false;
     protected $keyType = 'string';
+    protected $table = 'users';
 
     /**
      * The attributes that are mass assignable.
@@ -23,10 +24,11 @@ class User extends Authenticatable
      */
 
     protected $fillable = [
+        'id',
         'fullname',
-        'email',
         'no_handphone',
         'password',
+        'image',
     ];
 
     /**
@@ -54,11 +56,11 @@ class User extends Authenticatable
 
     public function histories()
     {
-        return $this->hasMany(History::class);
+        return $this->hasMany(Histories::class);
     }
 
-    public function subscriptions()
+    public function history_subscriptions()
     {
-        return $this->hasMany(Subscription::class);
+        return $this->hasMany(HistorySubscriptions::class);
     }
 }

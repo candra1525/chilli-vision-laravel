@@ -2,39 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\History;
+use App\Models\Histories;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as Response;
 use App\Services\SupabaseService;
 
-class HistoryController extends Controller
+class HistoriesController extends Controller
 {
     // All History
     public function index()
     {
-        try{
+        try {
             $supabase = new SupabaseService();
-            $history = History::all();
-            foreach($history as $h){
+            $history = Histories::all();
+            foreach ($history as $h) {
                 $h->url_image = $supabase->getImageHistory($h->image);
             }
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Successfully get all history',
+                'message' => 'Riwayat berhasil ditampilkan',
                 'data' => $history
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to get history',
+                'message' => 'Gagal menampilkan riwayat',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
+    // History by Id User
+    public function indexByIdUser(string $idUser)
+    {
+        try {
+            $validate = Validator::make(['id' => $idUser], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Gagal memvalidasi data riwayat',
+                    'error' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $supabase = new SupabaseService();
+
+            $history = Histories::where('user_id', $validated['id'])->get();
+
+            foreach ($history as $h) {
+                $h->url_image = $supabase->getImageHistory($h->image);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Riwayat berhasil ditampilkan',
+                'data' => $history
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal menampilkan riwayat',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Create History
     public function store(Request $request)
     {
         try {
@@ -50,15 +89,15 @@ class HistoryController extends Controller
             if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate history data',
+                    'message' => 'Gagal memvalidasi data riwayat',
                     'error' => $validate->errors(),
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-            
-            $validated = $validate->validated();
-            \Log::info('Validation passed:', $validated);
 
-            $history = new History();
+            $validated = $validate->validated();
+            Log::info('Validation passed:', $validated);
+
+            $history = new Histories();
             $history->title = $validated['title'];
 
             $file = $request->file('image');
@@ -67,7 +106,7 @@ class HistoryController extends Controller
             $supabase = new SupabaseService();
             $response = $supabase->uploadImageHistory($file, $filename);
 
-            \Log::info('Supabase upload response:', ['response' => $response]);
+            Log::info('Supabase upload response:', ['response' => $response]);
 
             if (isset($response['error'])) {
                 return response()->json([
@@ -84,105 +123,64 @@ class HistoryController extends Controller
             $history->save();
 
             $history->url_image = $response['url_image'];
-            \Log::info('History saved:', $history->toArray());
+            Log::info('History saved:', $history->toArray());
 
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'History saved successfully',
+                'message' => 'Riwayat berhasil disimpan',
                 'data' => $history->toArray(),
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error in storing history:', ['error' => $e->getMessage()]);
+            Log::error('Error in storing history:', ['error' => $e->getMessage()]);
 
             return response()->json([
-                'message' => 'Failed to save history',
+                'message' => 'Riwayat gagal disimpan',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-
-
-    // Show History by Id User
+    // Detail History
     public function show(string $id)
     {
-        try{
+        try {
             $validate = Validator::make(['id' => $id], [
-                'id' => 'required|exists:history,id'
+                'id' => 'required|exists:histories,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate history data',
+                    'message' => 'Gagal memvalidasi riwayat',
                     'error' => $validate->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $validated = $validate->validated();
 
-            $history = History::where('id', $validated['id'])->first();
-            $supabase = new SupabaseService();  
+            $history = Histories::where('id', $validated['id'])->first();
+
+            $supabase = new SupabaseService();
             $history->url_image = $supabase->getImageHistory($history->image);
-            
-            if(!$history){
+
+            if (!$history) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'History not found'
+                    'message' => 'Riwayat tidak ditemukan'
                 ], Response::HTTP_NOT_FOUND);
             }
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'History data by id',
+                'message' => 'Data riwayat berhasil ditampilkan',
                 'data' => $history
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to get history',
-                'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // listing History by Id User
-    public function showHistoryUserById(string $idUser)
-    {
-        try{
-            $validate = Validator::make(['id' => $idUser], [
-                'id' => 'required|exists:users,id'
-            ]);
-
-            if($validate->fails()){
-                return response()->json([
-                    'status' => 'failed',
-                    'message' => 'Failed to validate user data',
-                    'error' => $validate->errors()
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            $validated = $validate->validated();
-            $supabase = new SupabaseService();
-
-            $history = History::where('user_id', $validated['id'])->get();
-
-            foreach($history as $h){
-                $h->url_image = $supabase->getImageHistory  ($h->image);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'History data by user id',
-                'data' => $history
-            ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
-            return response()->json([
-                'message' => 'Failed to get history',
+                'message' => 'Gagal menampilkan riwayat',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -191,27 +189,27 @@ class HistoryController extends Controller
     // Delete History
     public function destroy(string $id)
     {
-        try{
+        try {
             DB::beginTransaction();
             $validate = Validator::make(['id' => $id], [
-                'id' => 'required|exists:history,id'
+                'id' => 'required|exists:histories,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate history data',
+                    'message' => 'Gagal memvalidasi data riwayat',
                     'error' => $validate->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $validated = $validate->validated();
-            $history = History::where('id', $validated['id'])->first();
+            $history = Histories::where('id', $validated['id'])->first();
 
-            if(!$history){
+            if (!$history) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'History not found'
+                    'message' => 'Riwayat tidak ditemukan'
                 ], Response::HTTP_NOT_FOUND);
             }
 
@@ -221,14 +219,12 @@ class HistoryController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'History deleted successfully'
+                'message' => 'Riwayat berhasil dihapus'
             ], Response::HTTP_OK);
-
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Failed to delete history',
+                'message' => 'Gagal menghapus riwayat',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -236,48 +232,48 @@ class HistoryController extends Controller
 
 
     // Check how much history data is stored
-    public function countHistory(string $idUser){
-        try{
+    public function countHistory(string $idUser)
+    {
+        try {
             $validate = Validator::make(['id' => $idUser], [
                 'id' => 'required|exists:users,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate user data',
+                    'message' => 'Gagal memvalidasi data riwayat',
                     'error' => $validate->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $validated = $validate->validated();
-            $history = History::where('user_id', $validated['id'])->count();
+            $history = Histories::where('user_id', $validated['id'])->count();
 
             // Jika Id user tidak ditemukan 
-            if(!$history){
+            if (!$history) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'History not found',
+                    'message' => 'Riwayat tidak ditemukan',
                     'data' => 0
                 ], Response::HTTP_OK);
             }
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'History data by user id',
+                'message' => 'Riwayat berhasil ditampilkan',
                 'data' => $history
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to get history',
+                'message' => 'Gagal menampilkan riwayat',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
 
-     // Update History (Rarely Used)
+    // Update History (Rarely Used)
     // public function update(Request $request, string $id)
     // {
     //     try{

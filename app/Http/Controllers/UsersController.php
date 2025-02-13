@@ -3,24 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response as Response;
 
-class UserController extends Controller
+class UsersController extends Controller
 {
     // All User
     public function index()
     {
-        try{
+        try {
             $user = User::all();
             return response()->json([
                 'message' => 'success',
                 'data' => $user
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Internal Server Error',
                 'error' => $e->getMessage()
@@ -31,12 +32,12 @@ class UserController extends Controller
     // Detail Account
     public function show(string $id)
     {
-        try{
+        try {
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:users,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Failed to validate user data',
@@ -46,8 +47,8 @@ class UserController extends Controller
 
             $validated = $validate->validated();
 
-            $user = User::where('id', $validated['id'] )->first();
-            if(!$user){
+            $user = User::where('id', $validated['id'])->first();
+            if (!$user) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'User not found'
@@ -59,8 +60,7 @@ class UserController extends Controller
                 'message' => 'User found',
                 'data' => $user
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()
@@ -71,16 +71,16 @@ class UserController extends Controller
     // Update Account
     public function update(Request $request, string $id)
     {
-        try{
+        try {
             DB::beginTransaction();
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:users,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate user data',
+                    'message' => 'Gagal melakukan validasi tipe data pengguna',
                     'errors' => $validate->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
@@ -88,29 +88,45 @@ class UserController extends Controller
             $validated = $validate->validated();
             $user = User::where('id', $validated['id'])->first();
 
-            if(!$user){
+            if (!$user) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'User not found'
+                    'message' => 'Pengguna tidak ditemukan'
                 ], Response::HTTP_NOT_FOUND);
             }
 
             $validate2 = Validator::make($request->all(), [
-                'fullname' => 'required|string|max:55',
-                'email' => 'nullable|email:rfc,dns',
-                'no_handphone' => 'required|string|max:13',
+                'fullname' => 'string|max:55',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'no_handphone' => 'string|max:13',
             ]);
 
-            if($validate2->fails()){
+            if ($validate2->fails()) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Failed to validate user data',
+                    'message' => 'Gagal melakukan validasi tipe data pengguna',
                     'errors' => $validate2->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $validated2 = $validate2->validated();
-            $validated2['email'] = $validated2['email'] ?? null;
+
+            // image
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
+                $supabase = new SupabaseService();
+                $response = $supabase->uploadImageUser($file, $filename);
+
+                if (isset($response['error'])) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Error uploading image: ' . $response['error']
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+
+                $validated2['image'] = $supabase->getImageUser($filename);
+            }
 
             $user->update($validated2);
 
@@ -121,8 +137,7 @@ class UserController extends Controller
                 'message' => 'User has been updated',
                 'data' => $user
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'failed',
@@ -134,13 +149,13 @@ class UserController extends Controller
     // Remove Account
     public function destroy(string $id)
     {
-        try{
+        try {
             DB::beginTransaction();
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:users,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Failed to validate user data',
@@ -151,7 +166,7 @@ class UserController extends Controller
             $validated = $validate->validated();
             $user = User::where('id', $validated['id'])->first();
 
-            if(!$user){
+            if (!$user) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'User not found'
@@ -166,8 +181,7 @@ class UserController extends Controller
                 'status' => 'success',
                 'message' => 'User has been deleted'
             ], Response::HTTP_OK);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'failed',
@@ -184,7 +198,7 @@ class UserController extends Controller
                 'no_handphone' => 'required|string',
                 'password' => 'required|string'
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json([
                     'status' => 'failed',
@@ -192,13 +206,13 @@ class UserController extends Controller
                     'errors' => $validator->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-    
+
             $validated = $validator->validated();
             $username = $validated['no_handphone'];
             $password = $validated['password'];
-          
+
             $user = User::where('no_handphone', $username)->first();
-            
+
             if (!$user) {
                 return response()->json([
                     'status' => 'failed',
@@ -212,12 +226,12 @@ class UserController extends Controller
                     'message' => 'Akun telah dihapus, tidak bisa login'
                 ], Response::HTTP_UNAUTHORIZED);
             }
-    
-    
+
+
             if (password_verify($password, $user->password)) {
                 $token = $user->createToken('access_token')->plainTextToken;
-                $user->token = $token;  
-    
+                $user->token = $token;
+
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Login success',
@@ -242,14 +256,14 @@ class UserController extends Controller
     {
         try {
             DB::beginTransaction();
-        
+
             $validator = Validator::make($request->all(), [
                 'fullname' => 'required|string|max:55',
-                'email' => 'nullable|email:rfc,dns',
                 'no_handphone' => 'nullable|string|max:13',
-                'password' => 'required|string|max:20',
+                'password' => 'required|string|max:20|min:8',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
-        
+
             if ($validator->fails()) {
                 return response()->json([
                     "status" => "failed",
@@ -257,29 +271,29 @@ class UserController extends Controller
                     "errors" => $validator->errors()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        
+
             $validated = $validator->validated();
 
             $searchNoHandphone = User::where('no_handphone', $validated['no_handphone'])->first();
-            if($searchNoHandphone){
+            if ($searchNoHandphone) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'No handphone telah terdaftar sebelumnya'
                 ], Response::HTTP_CONFLICT);
             }
-
-            $validated['email'] = $validated['email'] ?? null;
+            $validated['id'] = Str::uuid()->toString();
+            $validated['fullname'] = $validated['fullname'] ?? null;
+            $validated['image'] = null;
             $validated['password'] = bcrypt($validated['password']);
             $user = User::create($validated);
-        
+
             DB::commit();
-        
+
             return response()->json([
                 "status" => "success",
                 "message" => "Data user berhasil ditambahkan",
                 "data" => $user
             ], Response::HTTP_CREATED);
-        
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -293,13 +307,13 @@ class UserController extends Controller
     // Change Password
     public function changePassword(Request $request, string $id)
     {
-        try{
+        try {
             DB::beginTransaction();
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:users,id'
             ]);
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Gagal melakukan validasi tipe data user',
@@ -310,7 +324,7 @@ class UserController extends Controller
             $validated = $validate->validated();
             $user = User::where('id', $validated['id'])->first();
 
-            if(!$user){
+            if (!$user) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'User not found'
@@ -322,7 +336,7 @@ class UserController extends Controller
                 'password' => 'required|string|max:20',
             ]);
 
-            if($validate2->fails()){
+            if ($validate2->fails()) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Failed to validate user data',
@@ -332,10 +346,10 @@ class UserController extends Controller
 
             $validated2 = $validate2->validated();
 
-            if(!password_verify($validated2['old_password'], $user->password)){
+            if (!password_verify($validated2['old_password'], $user->password)) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Old password is wrong'
+                    'message' => 'Kata sandi lama tidak sesuai'
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -346,16 +360,34 @@ class UserController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Password has been changed'
+                'message' => 'Kata sandi berhasil diubah',
             ], Response::HTTP_OK);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    } 
+    }
+
+    // Count User
+    public function countUser(Request $request)
+    {
+        try {
+            $user = User::count();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Count user success',
+                'data' => $user,
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
     // Logout
     public function logout(Request $request)
