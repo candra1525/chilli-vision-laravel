@@ -24,6 +24,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Update Account User
         Route::post('/update-account/{id}', [UsersController::class, 'update']); // OK
 
+        // Update Photo Account User
+        Route::post('/update-photo-account/{id}', [UsersController::class, 'updatePhoto']); // OK (NEW) 
+
+        // Delete Photo Account User
+        Route::delete('/delete-photo-account/{id}', [UsersController::class, 'deletePhoto']); // OK (NEW)
+
         // Delete Account User
         Route::delete('/delete-account/{id}', [UsersController::class, 'destroy']); // OK
 

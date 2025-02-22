@@ -98,7 +98,6 @@ class UsersController extends Controller
 
             $validate2 = Validator::make($request->all(), [
                 'fullname' => 'string|max:55',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'no_handphone' => 'string|max:13',
             ]);
 
@@ -111,6 +110,70 @@ class UsersController extends Controller
             }
 
             $validated2 = $validate2->validated();
+            $user->fullname = $validated2['fullname'] ?? $user->fullname;
+            $user->no_handphone = $validated2['no_handphone'] ?? $user->no_handphone;
+
+            $user->save();
+
+            $supabase = new SupabaseService();
+            $filename = $user->image;
+            $response = ['url_image' => $supabase->getImageUser($filename)];
+            $user->image_url = $response['url_image'];
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User has been updated',
+                'data' => $user
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function updatePhoto(Request $request, string $id)
+    {
+        try {
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Gagal melakukan validasi tipe data pengguna',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+
+            DB::beginTransaction();
+            $user = User::where('id', $validated['id'])->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Pengguna tidak ditemukan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $validate2 = Validator::make($request->all(), [
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            ]);
+
+            if ($validate2->fails()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Gagal melakukan validasi tipe data pengguna',
+                    'errors' => $validate2->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
             $supabase = new SupabaseService();
             $filename = $user->image;
@@ -118,6 +181,8 @@ class UsersController extends Controller
 
             // image
             if ($request->hasFile('image')) {
+                // Hapus Image yang lama berdasarkan Id
+                $supabase->deleteImageUser($filename);
                 $file = $request->file('image');
                 $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
 
@@ -133,17 +198,15 @@ class UsersController extends Controller
                 $user->image = $filename;
             }
 
-            $user->fullname = $validated2['fullname'] ?? $user->fullname;
-            $user->no_handphone = $validated2['no_handphone'] ?? $user->no_handphone;
-
             $user->save();
-            $user->image_url = $response['url_image'];
+            $response = ['url_image' => $supabase->getImageUser($user->image)];
+            $user->url_image = $response['url_image'];
 
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'User has been updated',
+                'message' => 'Foto profil berhasil diubah',
                 'data' => $user
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
@@ -240,6 +303,11 @@ class UsersController extends Controller
             if (password_verify($password, $user->password)) {
                 $token = $user->createToken('access_token')->plainTextToken;
                 $user->token = $token;
+
+                $supabase = new SupabaseService();
+                $filename = $user->image;
+                $response = ['url_image' => $supabase->getImageUser($filename)];
+                $user->image_url = $response['url_image'];
 
                 return response()->json([
                     'status' => 'success',
@@ -408,6 +476,62 @@ class UsersController extends Controller
                 'message' => 'Logout success'
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Delete Image User
+    public function deletePhoto(string $id)
+    {
+        try {
+            DB::beginTransaction();
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to validate user data',
+                    'errors' => $validate->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validate->validated();
+            $user = User::where('id', $validated['id'])->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $supabase = new SupabaseService();
+            $filename = $user->image;
+            $response = $supabase->deleteImageUser($filename);
+
+            if (isset($response['error'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Error deleting image: ' . (is_array($response) ? $response['error'] : 'Unknown error')
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $user->image = null;
+            $user->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Gambar berhasil dihapus',
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()

@@ -183,4 +183,34 @@ class SupabaseService
       {
             return "{$this->url}/storage/v1/object/public/{$this->bucket_history}/{$fileName}";
       }
+
+      // Delete Image User
+      public function deleteImageUser($fileName)
+      {
+            $baseUrl = $this->url;
+            $path = "{$this->bucket_user}/{$fileName}";
+
+            try {
+                  // Pastikan base URL sudah diatur
+                  if (!$baseUrl) {
+                        throw new \Exception('Base URL for Supabase is not configured.');
+                  }
+
+                  $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $this->key,
+                  ])->delete("{$baseUrl}/storage/v1/object/{$path}");
+
+                  // Log respons dari Supabase
+                  Log::info('Supabase Response:', ['response' => $response->body()]);
+
+                  if ($response->failed()) {
+                        throw new \Exception('Error deleting file: ' . $response->body());
+                  }
+
+                  return true;
+            } catch (\Exception $e) {
+                  Log::error('Error deleting to Supabase:', ['message' => $e->getMessage()]);
+                  throw new \Exception($e->getMessage());
+            }
+      }
 }
