@@ -7,6 +7,7 @@ use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response as Response;
 
@@ -117,8 +118,12 @@ class UsersController extends Controller
 
             $supabase = new SupabaseService();
             $filename = $user->image;
-            $response = ['url_image' => $supabase->getImageUser($filename)];
-            $user->image_url = $response['url_image'];
+            if ($filename !== null) {
+                $response = ['url_image' => $supabase->getImageUser($filename)];
+                $user->image_url = $response['url_image'];
+            } else {
+                $user->image_url = null;
+            }
 
             DB::commit();
 
@@ -177,12 +182,14 @@ class UsersController extends Controller
 
             $supabase = new SupabaseService();
             $filename = $user->image;
-            $response = ['url_image' => $supabase->getImageUser($filename)];
+            // $response = ['url_image' => $supabase->getImageUser($filename)];
 
             // image
             if ($request->hasFile('image')) {
                 // Hapus Image yang lama berdasarkan Id
-                $supabase->deleteImageUser($filename);
+                if ($filename !== null) {
+                    $supabase->deleteImageUser($filename);
+                }
                 $file = $request->file('image');
                 $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
 
@@ -196,10 +203,10 @@ class UsersController extends Controller
                 }
 
                 $user->image = $filename;
+                $user->save();
+                $response = ['url_image' => $supabase->getImageUser($user->image)];
             }
 
-            $user->save();
-            $response = ['url_image' => $supabase->getImageUser($user->image)];
             $user->url_image = $response['url_image'];
 
             DB::commit();
@@ -306,8 +313,14 @@ class UsersController extends Controller
 
                 $supabase = new SupabaseService();
                 $filename = $user->image;
-                $response = ['url_image' => $supabase->getImageUser($filename)];
-                $user->image_url = $response['url_image'];
+                if ($filename !== null) {
+                    $response = ['url_image' => $supabase->getImageUser($filename)];
+                    $user->image_url = $response['url_image'];
+                } else {
+                    $user->image_url = null;
+                }
+                // $response = ['url_image' => $supabase->getImageUser($filename)];
+                // $user->image_url = $response['url_image'];
 
                 return response()->json([
                     'status' => 'success',

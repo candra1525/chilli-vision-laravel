@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,10 +17,11 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::create([
+            'id' => Str::uuid(),
             'fullname' => 'Candra',
-            'email' => 'candra@email.com',
             'no_handphone' => '081234567890',
             'password' => bcrypt('root'),
+            'role' => 'admin',
         ]);
     }
 }
