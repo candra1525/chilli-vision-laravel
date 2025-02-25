@@ -55,6 +55,7 @@ class SubscriptionsController extends Controller
                 'title' => 'required|string|max:100',
                 'image_subscriptions' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'price' => 'required|integer',
+                'period' => 'required|integer',
                 'description' => 'required|string',
             ]);
 
@@ -179,6 +180,7 @@ class SubscriptionsController extends Controller
                     'title' => 'string|max:100',
                     'image_subscriptions' => 'image|mimes:jpeg,png,jpg|max:2048',
                     'price' => 'integer',
+                    'period' => 'integer',
                     'description' => 'string',
                 ]);
 

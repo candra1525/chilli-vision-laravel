@@ -31,12 +31,14 @@ class HistorySubscriptionsController extends Controller
 
             $supabase = new SupabaseService();
             // Descending berdasarkan created_at
-            $hs = HistorySubscriptions::where('user_id', $validated['id'])->orderBy('created_at', 'desc')->get();
+            $hs = HistorySubscriptions::where('user_id', $validated['id'])
+                ->where('status', '!=', 'active')
+                ->orderBy('created_at', 'desc')->get();
 
             if ($hs->isEmpty()) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Data langganan Kosong'
+                    'message' => 'Anda belum berlangganan'
                 ], Response::HTTP_OK);
             }
 
@@ -56,6 +58,53 @@ class HistorySubscriptionsController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    // List Subs Active User ID
+    public function listSubsActive(string $id)
+    {
+        try {
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:users,id'
+            ]);
+
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validate->errors()
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $validated = $validate->validated();
+
+            $supabase = new SupabaseService();
+            $hs = HistorySubscriptions::where('user_id', $validated['id'])
+                ->where('status', 'active')
+                ->orderBy('created_at', 'desc')->get();
+
+            if ($hs->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Tidak ada langganan aktif'
+                ], Response::HTTP_OK);
+            }
+
+            foreach ($hs as $h) {
+                $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data riwayat langganan aktif berhasil diambil',
+                'data' => $hs
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     // Store
     public function store(Request $request)

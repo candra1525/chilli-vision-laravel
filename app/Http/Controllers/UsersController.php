@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HistorySubscriptions;
 use App\Models\User;
 use App\Services\SupabaseService;
+use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -187,7 +190,7 @@ class UsersController extends Controller
             // image
             if ($request->hasFile('image')) {
                 // Hapus Image yang lama berdasarkan Id
-                if ($filename !== null) {
+                if ($filename != null) {
                     $supabase->deleteImageUser($filename);
                 }
                 $file = $request->file('image');
@@ -290,7 +293,37 @@ class UsersController extends Controller
             $username = $validated['no_handphone'];
             $password = $validated['password'];
 
-            $user = User::where('no_handphone', $username)->first();
+            $user = User::with([
+                'history_subscriptions' => function ($query) {
+                    $query->where('status', 'active')
+                        ->latest('created_at')
+                        ->limit(1);
+                }
+            ])->where('no_handphone', $username)->first();
+
+            if ($user && $user->history_subscriptions->isNotEmpty()) {
+                $latestHistory = $user->history_subscriptions->first();
+
+                $currentDate = new DateTime();
+                $endDate = new DateTime($latestHistory->end_date);
+                $interval = $endDate->diff($currentDate);
+
+                if ($interval->invert == 0) { // `invert == 0` artinya `end_date` sudah lewat
+                    $findHistorySubs = HistorySubscriptions::where('id', $latestHistory->id)->first();
+                    if ($findHistorySubs) {
+                        $findHistorySubs->status = 'expired';
+                        $findHistorySubs->save();
+                    }
+
+                    $user = User::with([
+                        'history_subscriptions' => function ($query) {
+                            $query->where('status', 'active')
+                                ->latest('created_at')
+                                ->limit(1);
+                        }
+                    ])->where('no_handphone', $username)->first();
+                }
+            }
 
             if (!$user) {
                 return response()->json([
@@ -306,7 +339,6 @@ class UsersController extends Controller
                 ], Response::HTTP_UNAUTHORIZED);
             }
 
-
             if (password_verify($password, $user->password)) {
                 $token = $user->createToken('access_token')->plainTextToken;
                 $user->token = $token;
@@ -319,13 +351,17 @@ class UsersController extends Controller
                 } else {
                     $user->image_url = null;
                 }
-                // $response = ['url_image' => $supabase->getImageUser($filename)];
-                // $user->image_url = $response['url_image'];
+
+                if ($user->history_subscriptions->isNotEmpty() && $user->history_subscriptions[0]->image_transaction !== null) {
+                    $user->history_subscriptions[0]->image_url = $supabase->getImageHistorySubscription($user->history_subscriptions[0]->image_transaction);
+                }
 
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Login success',
-                    'data' => $user,
+                    'data' => array_merge($user->toArray(), [
+                        'history_subscriptions' => $user->history_subscriptions->first() ?? null
+                    ]),
                 ], Response::HTTP_OK);
             } else {
                 return response()->json([
