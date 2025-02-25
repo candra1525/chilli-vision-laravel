@@ -94,7 +94,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/list-history/{idUser}', [HistorySubscriptionsController::class, 'index']); // OK
 
         // Get List Active By Id User
-        Route::get('/list-active/{idUser}', [HistorySubscriptionsController::class, 'listSubsActive']); // OK (NEW)
+        Route::get('/list-active/{idUser}', [HistorySubscriptionsController::class, 'listSubsActive']); // OK
 
         // Show Detail User Subscription id
         Route::get('/detail/{id}', [HistorySubscriptionsController::class, 'show']); // OK
