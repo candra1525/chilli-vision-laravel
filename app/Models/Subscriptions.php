@@ -18,6 +18,6 @@ class Subscriptions extends Model
 
     public function history_subscriptions()
     {
-        return $this->hasMany(HistorySubscriptions::class);
+        return $this->hasMany(HistorySubscriptions::class, 'subscription_id', 'id');
     }
 }

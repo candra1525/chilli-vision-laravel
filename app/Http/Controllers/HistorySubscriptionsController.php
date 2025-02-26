@@ -31,7 +31,8 @@ class HistorySubscriptionsController extends Controller
 
             $supabase = new SupabaseService();
             // Descending berdasarkan created_at
-            $hs = HistorySubscriptions::where('user_id', $validated['id'])
+            $hs = HistorySubscriptions::with(['subscriptions'])
+                ->where('user_id', $validated['id'])
                 ->where('status', '!=', 'active')
                 ->orderBy('created_at', 'desc')->get();
 
@@ -77,7 +78,8 @@ class HistorySubscriptionsController extends Controller
             $validated = $validate->validated();
 
             $supabase = new SupabaseService();
-            $hs = HistorySubscriptions::where('user_id', $validated['id'])
+            $hs = HistorySubscriptions::with(['subscriptions'])
+                ->where('user_id', $validated['id'])
                 ->where('status', 'active')
                 ->orderBy('created_at', 'desc')->get();
 

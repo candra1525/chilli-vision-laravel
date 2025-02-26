@@ -16,7 +16,7 @@ class HistorySubscriptions extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = [ 'id','start_date', 'end_date', 'status', 'payment_method', 'image_transaction', 'user_id', 'subscription_id'];
+    protected $fillable = ['id', 'start_date', 'end_date', 'status', 'payment_method', 'image_transaction', 'user_id', 'subscription_id'];
 
     protected $table = 'history_subscriptions';
 
@@ -27,6 +27,6 @@ class HistorySubscriptions extends Model
 
     public function subscriptions()
     {
-        return $this->belongsTo(Subscriptions::class);
+        return $this->belongsTo(Subscriptions::class, 'subscription_id', 'id');
     }
 }
