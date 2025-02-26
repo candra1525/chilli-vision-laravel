@@ -37,7 +37,7 @@ class HistorySubscriptionsController extends Controller
 
             if ($hs->isEmpty()) {
                 return response()->json([
-                    'status' => 'success',
+                    'status' => 'error',
                     'message' => 'Anda belum berlangganan'
                 ], Response::HTTP_OK);
             }
@@ -83,7 +83,7 @@ class HistorySubscriptionsController extends Controller
 
             if ($hs->isEmpty()) {
                 return response()->json([
-                    'status' => 'success',
+                    'status' => 'error',
                     'message' => 'Tidak ada langganan aktif'
                 ], Response::HTTP_OK);
             }
