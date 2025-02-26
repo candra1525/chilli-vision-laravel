@@ -39,7 +39,7 @@ class HistorySubscriptionsController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Anda belum berlangganan'
-                ], Response::HTTP_OK);
+                ], Response::HTTP_NOT_FOUND);
             }
 
             foreach ($hs as $h) {
@@ -85,7 +85,7 @@ class HistorySubscriptionsController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Tidak ada langganan aktif'
-                ], Response::HTTP_OK);
+                ], Response::HTTP_NOT_FOUND);
             }
 
             foreach ($hs as $h) {
