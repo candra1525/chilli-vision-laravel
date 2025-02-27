@@ -18,6 +18,14 @@ class HistoriesController extends Controller
         try {
             $supabase = new SupabaseService();
             $history = Histories::all();
+
+            if ($history->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Belum ada riwayat'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
             foreach ($history as $h) {
                 $h->url_image = $supabase->getImageHistory($h->image);
             }
@@ -55,6 +63,14 @@ class HistoriesController extends Controller
             $supabase = new SupabaseService();
 
             $history = Histories::where('user_id', $validated['id'])->get();
+
+            if ($history->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Belum ada riwayat'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
 
             foreach ($history as $h) {
                 $h->url_image = $supabase->getImageHistory($h->image);
