@@ -62,7 +62,9 @@ class HistoriesController extends Controller
             $validated = $validate->validated();
             $supabase = new SupabaseService();
 
-            $history = Histories::where('user_id', $validated['id'])->get();
+            $history = Histories::where('user_id', $validated['id'])
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             if ($history->isEmpty()) {
                 return response()->json([
