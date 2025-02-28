@@ -612,7 +612,7 @@ class UsersController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Logout success'
-            ], Response::HTTP_OK);
+            ], Response::HTTP_C);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'failed',
