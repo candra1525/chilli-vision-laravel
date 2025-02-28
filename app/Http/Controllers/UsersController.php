@@ -245,7 +245,9 @@ class UsersController extends Controller
 
             $validated = $validate->validated();
 
+            DB::beginTransaction();
             $user = User::where('id', $validated['id'])->first();
+
             if (!$user) {
                 return response()->json([
                     'status' => 'failed',
@@ -266,16 +268,17 @@ class UsersController extends Controller
             }
 
             $supabase = new SupabaseService();
-            $oldFilename = $user->image;
-            $newFilename = null;
+            $filenameLama = $user->image;
+            $filenameBaru = $filenameLama; // Default, jika tidak ada gambar baru
 
+            // Upload gambar baru dulu
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $newFilename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
+                $filenameBaru = 'users_' . time() . '.' . $file->getClientOriginalExtension();
 
-                // **Upload dulu**
-                $response = $supabase->uploadImageUser($file, $newFilename);
+                $response = $supabase->uploadImageUser($file, $filenameBaru);
 
+                // Jika gagal upload, jangan ubah foto lama
                 if (isset($response['error'])) {
                     return response()->json([
                         'status' => 'error',
@@ -283,28 +286,20 @@ class UsersController extends Controller
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
 
-                // **Setelah berhasil upload, baru update database**
-                DB::beginTransaction();
-                try {
-                    $user->image = $newFilename;
-                    $user->save();
-                    DB::commit();
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return response()->json([
-                        'status' => 'failed',
-                        'message' => 'Gagal menyimpan data ke database: ' . $e->getMessage()
-                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
-                }
+                // Jika berhasil, baru update nama file di database
+                $user->image = $filenameBaru;
+                $user->save();
 
-                // **Setelah database sukses, baru hapus gambar lama**
-                if ($oldFilename) {
-                    $supabase->deleteImageUser($oldFilename);
+                // Jika ada foto lama, baru hapus
+                if ($filenameLama != null) {
+                    $supabase->deleteImageUser($filenameLama);
                 }
             }
 
-            // Ambil URL terbaru
+            // Ambil URL gambar yang baru
             $user->url_image = $supabase->getImageUser($user->image);
+
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
@@ -312,12 +307,14 @@ class UsersController extends Controller
                 'data' => $user
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => 'failed',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
 
     // Remove Account
