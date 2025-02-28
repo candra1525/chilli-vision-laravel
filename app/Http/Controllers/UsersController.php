@@ -245,9 +245,7 @@ class UsersController extends Controller
 
             $validated = $validate->validated();
 
-            DB::beginTransaction();
             $user = User::where('id', $validated['id'])->first();
-
             if (!$user) {
                 return response()->json([
                     'status' => 'failed',
@@ -268,13 +266,14 @@ class UsersController extends Controller
             }
 
             $supabase = new SupabaseService();
-            $filename = $user->image;
+            $oldFilename = $user->image;
             $newFilename = null;
 
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $newFilename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
 
+                // **Upload dulu**
                 $response = $supabase->uploadImageUser($file, $newFilename);
 
                 if (isset($response['error'])) {
@@ -284,20 +283,28 @@ class UsersController extends Controller
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
 
-                // Jika upload berhasil, update data user
-                $user->image = $newFilename;
-                $user->save();
+                // **Setelah berhasil upload, baru update database**
+                DB::beginTransaction();
+                try {
+                    $user->image = $newFilename;
+                    $user->save();
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => 'failed',
+                        'message' => 'Gagal menyimpan data ke database: ' . $e->getMessage()
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
 
-                // Setelah foto baru berhasil diupload, hapus foto lama
-                if ($filename) {
-                    $supabase->deleteImageUser($filename);
+                // **Setelah database sukses, baru hapus gambar lama**
+                if ($oldFilename) {
+                    $supabase->deleteImageUser($oldFilename);
                 }
             }
 
-            // Ambil URL gambar terbaru
+            // Ambil URL terbaru
             $user->url_image = $supabase->getImageUser($user->image);
-
-            DB::commit();
 
             return response()->json([
                 'status' => 'success',
@@ -305,10 +312,9 @@ class UsersController extends Controller
                 'data' => $user
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'status' => 'failed',
-                'message' => $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
