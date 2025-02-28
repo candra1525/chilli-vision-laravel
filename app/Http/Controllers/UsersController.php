@@ -144,6 +144,90 @@ class UsersController extends Controller
         }
     }
 
+    // public function updatePhoto(Request $request, string $id)
+    // {
+    //     try {
+    //         $validate = Validator::make(['id' => $id], [
+    //             'id' => 'required|exists:users,id'
+    //         ]);
+
+    //         if ($validate->fails()) {
+    //             return response()->json([
+    //                 'status' => 'failed',
+    //                 'message' => 'Gagal melakukan validasi tipe data pengguna',
+    //                 'errors' => $validate->errors()
+    //             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+    //         }
+
+    //         $validated = $validate->validated();
+
+    //         DB::beginTransaction();
+    //         $user = User::where('id', $validated['id'])->first();
+
+    //         if (!$user) {
+    //             return response()->json([
+    //                 'status' => 'failed',
+    //                 'message' => 'Pengguna tidak ditemukan'
+    //             ], Response::HTTP_NOT_FOUND);
+    //         }
+
+    //         $validate2 = Validator::make($request->all(), [
+    //             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+    //         ]);
+
+    //         if ($validate2->fails()) {
+    //             return response()->json([
+    //                 'status' => 'failed',
+    //                 'message' => 'Gagal melakukan validasi tipe data pengguna',
+    //                 'errors' => $validate2->errors()
+    //             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+    //         }
+
+    //         $supabase = new SupabaseService();
+    //         $filename = $user->image;
+    //         // $response = ['url_image' => $supabase->getImageUser($filename)];
+
+    //         // image
+    //         if ($request->hasFile('image')) {
+    //             // Hapus Image yang lama berdasarkan Id
+    //             if ($filename != null) {
+    //                 $supabase->deleteImageUser($filename);
+    //             }
+    //             $file = $request->file('image');
+    //             $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
+
+    //             $response = $supabase->uploadImageUser($file, $filename);
+
+    //             if (isset($response['error'])) {
+    //                 return response()->json([
+    //                     'status' => 'error',
+    //                     'message' => 'Error uploading image: ' . $response['error']
+    //                 ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    //             }
+
+    //             $user->image = $filename;
+    //             $user->save();
+    //             $response = ['url_image' => $supabase->getImageUser($user->image)];
+    //         }
+
+    //         $user->url_image = $response['url_image'];
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => 'Foto profil berhasil diubah',
+    //             'data' => $user
+    //         ], Response::HTTP_OK);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => 'failed',
+    //             'message' => $e->getMessage()
+    //         ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    //     }
+    // }
+
     public function updatePhoto(Request $request, string $id)
     {
         try {
@@ -185,18 +269,13 @@ class UsersController extends Controller
 
             $supabase = new SupabaseService();
             $filename = $user->image;
-            // $response = ['url_image' => $supabase->getImageUser($filename)];
+            $newFilename = null;
 
-            // image
             if ($request->hasFile('image')) {
-                // Hapus Image yang lama berdasarkan Id
-                if ($filename != null) {
-                    $supabase->deleteImageUser($filename);
-                }
                 $file = $request->file('image');
-                $filename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
+                $newFilename = 'users_' . time() . '.' . $file->getClientOriginalExtension();
 
-                $response = $supabase->uploadImageUser($file, $filename);
+                $response = $supabase->uploadImageUser($file, $newFilename);
 
                 if (isset($response['error'])) {
                     return response()->json([
@@ -205,12 +284,18 @@ class UsersController extends Controller
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 }
 
-                $user->image = $filename;
+                // Jika upload berhasil, update data user
+                $user->image = $newFilename;
                 $user->save();
-                $response = ['url_image' => $supabase->getImageUser($user->image)];
+
+                // Setelah foto baru berhasil diupload, hapus foto lama
+                if ($filename) {
+                    $supabase->deleteImageUser($filename);
+                }
             }
 
-            $user->url_image = $response['url_image'];
+            // Ambil URL gambar terbaru
+            $user->url_image = $supabase->getImageUser($user->image);
 
             DB::commit();
 
@@ -227,6 +312,7 @@ class UsersController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Remove Account
     public function destroy(string $id)
