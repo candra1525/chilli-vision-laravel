@@ -608,11 +608,22 @@ class UsersController extends Controller
     public function logout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'User not authenticated'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            // Hapus hanya token yang sedang digunakan
+            $user->currentAccessToken()->delete();
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Logout success'
-            ], Response::HTTP_C);
+                'message' => 'Logout successful'
+            ], Response::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'failed',
@@ -620,6 +631,8 @@ class UsersController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     // Delete Image User
     public function deletePhoto(string $id)
