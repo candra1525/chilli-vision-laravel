@@ -45,7 +45,7 @@ class HistorySubscriptionsController extends Controller
 
             foreach ($hs as $h) {
                 $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
-                $h->subscriptions->image_url = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
+                $h->subscriptions->url_image = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
             }
 
             return response()->json([
@@ -93,7 +93,7 @@ class HistorySubscriptionsController extends Controller
 
             foreach ($hs as $h) {
                 $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
-                $h->subscriptions->image_url = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
+                $h->subscriptions->url_image = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
             }
 
             return response()->json([
