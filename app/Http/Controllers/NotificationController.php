@@ -22,6 +22,12 @@ class NotificationController extends Controller
                 ->where('publish_date', '<=', date('Y-m-d'))
                 ->get();
 
+            if ($notifications->isEmpty()) {
+                return response()->json([
+                    'message' => 'Data notifikasi tidak ditemukan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
             return response()->json([
                 'message' => 'Success to get data',
                 'data' => $notifications
