@@ -20,6 +20,7 @@ class NotificationController extends Controller
         try {
             $notifications = Notification::where('status', 'publish')
                 ->where('publish_date', '<=', date('Y-m-d'))
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             if ($notifications->isEmpty()) {
