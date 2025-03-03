@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HistoriesController;
 use App\Http\Controllers\HistorySubscriptionsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SubscriptionsController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
@@ -110,5 +111,23 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         // Check Expired atau Belum subs nya
         Route::get('/check-expired/{id}', [HistorySubscriptionsController::class, 'checkExpired']); // OK
+    });
+
+    // Notification
+    Route::prefix('notification')->group(function () {
+        // Get All Notification
+        Route::get('/all', [NotificationController::class, 'index']); // OK
+
+        // Show Detail Notification id
+        Route::get('/detail/{id}', [NotificationController::class, 'show']); // OK
+
+        // Create Notification
+        Route::post('/create', [NotificationController::class, 'store']); // OK
+
+        // Update Notification
+        Route::post('/update/{id}', [NotificationController::class, 'update']); // OK
+
+        // Delete Notification
+        Route::delete('/delete/{id}', [NotificationController::class, 'destroy']); // OK
     });
 });

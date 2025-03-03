@@ -511,7 +511,6 @@ class UsersController extends Controller
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             DB::rollBack();
-
             return response()->json([
                 'status' => 'failed',
                 'message' => $e->getMessage()
