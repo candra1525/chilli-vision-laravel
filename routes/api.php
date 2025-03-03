@@ -125,7 +125,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/create', [NotificationController::class, 'store']); // OK
 
         // Update Notification
-        Route::post('/update/{id}', [NotificationController::class, 'update']); // OK
+        Route::put('/update/{id}', [NotificationController::class, 'update']); // OK
 
         // Delete Notification
         Route::delete('/delete/{id}', [NotificationController::class, 'destroy']); // OK
