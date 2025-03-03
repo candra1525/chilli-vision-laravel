@@ -113,6 +113,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/check-expired/{id}', [HistorySubscriptionsController::class, 'checkExpired']); // OK
     });
 
+    // Active Subscription
+    Route::get('/active-subscriptions/{idUser}', [UsersController::class, 'activeSubscription']); // OK
+
     // Notification
     Route::prefix('notification')->group(function () {
         // Get All Notification

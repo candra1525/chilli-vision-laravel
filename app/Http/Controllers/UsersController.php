@@ -688,4 +688,35 @@ class UsersController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    // activeSubscription
+    public function activeSubscription(string $id)
+    {
+        try {
+            // Cari ke history subscription yang statusnya active berdasarkan id User
+            $activeSubscription = HistorySubscriptions::where('user_id', $id)
+                ->where('status', 'active')
+                ->latest('created_at')
+                ->limit(1)
+                ->first();
+
+            if (!$activeSubscription) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Tidak ada langganan yang aktif'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Berhasil mendapatkan langganan aktif',
+                'data' => $activeSubscription
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
