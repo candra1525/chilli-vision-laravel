@@ -52,7 +52,7 @@ class NotificationController extends Controller
                 'title' => 'required|string',
                 'description' => 'required|string',
                 'publish_date' => 'required|date',
-                'status' => 'required|in:publish,unpublish|default:publish'
+                'status' => 'required|in:publish,unpublish'
             ]);
 
             if ($validator->fails()) {
