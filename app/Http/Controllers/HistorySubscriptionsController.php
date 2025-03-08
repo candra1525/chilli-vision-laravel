@@ -50,12 +50,12 @@ class HistorySubscriptionsController extends Controller
     public function indexPending()
     {
         try {
-
             $supabase = new SupabaseService();
             // Descending berdasarkan created_at
             $hs = HistorySubscriptions::with(['subscriptions'])
-                ->where('status', '==', 'pending')
-                ->orderBy('created_at', 'desc')->get();
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             if ($hs->isEmpty()) {
                 return response()->json([
