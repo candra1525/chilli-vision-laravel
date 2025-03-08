@@ -89,7 +89,7 @@ class SubscriptionsController extends Controller
             }
 
             $subs->image_subscriptions = $filename;
-
+            $subs->period = $validated['period'];
             $subs->price = $validated['price'];
             $subs->description = $validated['description'];
 
