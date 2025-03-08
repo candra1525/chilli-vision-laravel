@@ -41,6 +41,30 @@ class NotificationController extends Controller
         }
     }
 
+    public function indexAll()
+    {
+        try {
+            $notifications = Notification::orderBy('created_at', 'desc')
+                ->get();
+
+            if ($notifications->isEmpty()) {
+                return response()->json([
+                    'message' => 'Data notifikasi tidak ditemukan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'message' => 'Success to get data',
+                'data' => $notifications
+            ], Response::HTTP_OK);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Failed to get data',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */

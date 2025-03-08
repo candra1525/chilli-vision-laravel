@@ -120,6 +120,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::prefix('notification')->group(function () {
         // Get All Notification
         Route::get('/all', [NotificationController::class, 'index']); // OK
+        Route::get('/all-admin', [NotificationController::class, 'indexAll']); // OK
 
         // Show Detail Notification id
         Route::get('/detail/{id}', [NotificationController::class, 'show']); // OK
