@@ -19,6 +19,7 @@ class HistorySubscriptionsController extends Controller
             $supabase = new SupabaseService();
             // Descending berdasarkan created_at
             $hs = HistorySubscriptions::with(['subscriptions'])
+                ->where('status', '!=', 'pending')
                 ->orderBy('created_at', 'desc')->get();
 
             if ($hs->isEmpty()) {
