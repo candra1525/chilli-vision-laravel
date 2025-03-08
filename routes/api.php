@@ -91,6 +91,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     // History Subscription
     Route::prefix('history-subscriptions')->group(function () {
+        // List All History
+        Route::get('/all', [HistorySubscriptionsController::class, 'indexAll']); // OK
+
+        // List History Pending
+        Route::get('/all-pending', [HistorySubscriptionsController::class, 'indexPending']); // OK
+
         // Get List History By Id User
         Route::get('/list-history/{idUser}', [HistorySubscriptionsController::class, 'index']); // OK
 

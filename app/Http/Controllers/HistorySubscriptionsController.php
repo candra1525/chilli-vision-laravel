@@ -12,6 +12,76 @@ use Symfony\Component\HttpFoundation\Response as Response;
 
 class HistorySubscriptionsController extends Controller
 {
+    // Index All
+    public function indexAll()
+    {
+        try {
+            $supabase = new SupabaseService();
+            // Descending berdasarkan created_at
+            $hs = HistorySubscriptions::with(['subscriptions'])
+                ->orderBy('created_at', 'desc')->get();
+
+            if ($hs->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda belum berlangganan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            foreach ($hs as $h) {
+                $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
+                $h->subscriptions->url_image = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data riwayat langganan berhasil diambil',
+                'data' => $hs
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Index Pending
+    public function indexPending()
+    {
+        try {
+
+            $supabase = new SupabaseService();
+            // Descending berdasarkan created_at
+            $hs = HistorySubscriptions::with(['subscriptions'])
+                ->where('status', '==', 'pending')
+                ->orderBy('created_at', 'desc')->get();
+
+            if ($hs->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda belum berlangganan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            foreach ($hs as $h) {
+                $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
+                $h->subscriptions->url_image = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data riwayat langganan berhasil diambil',
+                'data' => $hs
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // List Subs User ID
     public function index(string $id)
     {
