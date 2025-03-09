@@ -17,10 +17,12 @@ class HistorySubscriptionsController extends Controller
     {
         try {
             $supabase = new SupabaseService();
-            // Descending berdasarkan created_at
-            $hs = HistorySubscriptions::with(['subscriptions'])
+
+            // Ambil data HistorySubscriptions dengan relasi subscriptions, urutkan berdasarkan created_at descending
+            $hs = HistorySubscriptions::with('subscriptions', 'user')
                 ->where('status', '!=', 'pending')
-                ->orderBy('created_at', 'desc')->get();
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             if ($hs->isEmpty()) {
                 return response()->json([
@@ -29,10 +31,36 @@ class HistorySubscriptionsController extends Controller
                 ], Response::HTTP_NOT_FOUND);
             }
 
-            foreach ($hs as $h) {
-                $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
-                $h->subscriptions->url_image = $supabase->getImageSubscription($h->subscriptions->image_subscriptions);
-            }
+            // Iterasi dan transformasi data agar sesuai dengan format yang diinginkan
+            $hs = $hs->map(function ($h) use ($supabase) {
+                return [
+                    'id' => $h->id,
+                    'start_date' => $h->start_date,
+                    'end_date' => $h->end_date,
+                    'status' => $h->status,
+                    'payment_method' => $h->payment_method,
+                    'image_transaction' => $h->image_transaction,
+                    'deleted_at' => $h->deleted_at,
+                    'created_at' => $h->created_at,
+                    'updated_at' => $h->updated_at,
+                    'image_url' => $supabase->getImageHistorySubscription($h->image_transaction),
+
+                    // Data subscriptions langsung ditempatkan dalam objek utama
+                    'id_subscriptions' => $h->subscription_id,
+                    'title_subscriptions' => $h->subscriptions->title ?? null,
+                    'image_subscriptions' => $h->subscriptions->image_subscriptions ?? null,
+                    'price_subscriptions' => $h->subscriptions->price ?? null,
+                    'description_subscriptions' => $h->subscriptions->description ?? null,
+                    'period_subscriptions' => $h->subscriptions->period ?? null,
+                    'url_image_subscriptions' => $h->subscriptions ? $supabase->getImageSubscription($h->subscriptions->image_subscriptions) : null,
+
+                    // User
+                    'id_user' => $h->user_id,
+                    'fullname' => $h->user->fullname ?? null,
+                    'no_handphone' => $h->user->no_handphone ?? null,
+                    'url_image_user' => $h->user ? $supabase->getImageUser($h->user->image) : null,
+                ];
+            });
 
             return response()->json([
                 'status' => 'success',
@@ -46,6 +74,7 @@ class HistorySubscriptionsController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Index Pending
     public function indexPending()
