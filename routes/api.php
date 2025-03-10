@@ -112,6 +112,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Update
         Route::post('/update/{id}', [HistorySubscriptionsController::class, 'update']); // OK
 
+        Route::put('/update-status/{id}', [HistorySubscriptionsController::class, 'updateStatus']); // OK
+
         // Delete
         Route::delete('/delete/{id}', [HistorySubscriptionsController::class, 'destroy']); // OK
 

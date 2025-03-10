@@ -445,6 +445,64 @@ class HistorySubscriptionsController extends Controller
         }
     }
 
+    public function updateStatus(Request $request, string $id)
+    {
+        try {
+            $validate = Validator::make(['id' => $id], [
+                'id' => 'required|exists:history_subscriptions,id'
+            ]);
+
+            if ($validate->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validate->errors()
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $validated = $validate->validated();
+
+            $hs = HistorySubscriptions::findOrFail($validated['id']);
+
+            if (!$hs) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data riwayat langganan tidak ditemukan'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $validate2 = Validator::make($request->all(), [
+                'status' => 'required|in:active,pending,expired,cancel',
+            ]);
+
+            if ($validate2->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validate2->errors()
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $validated2 = $validate2->validated();
+
+            DB::beginTransaction();
+            $hs->status = $validated2['status'];
+            $hs->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data riwayat langganan berhasil diperbarui',
+                'data' => $hs
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Delete
     public function destroy(string $id)
     {
