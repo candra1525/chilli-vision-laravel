@@ -470,28 +470,28 @@ class HistorySubscriptionsController extends Controller
                 ], Response::HTTP_NOT_FOUND);
             }
 
+
             $validate2 = Validator::make($request->all(), [
-                'status' => 'required|in:active,pending,expired,cancel',
+                'status' => 'nullable|in:active,pending,expired,cancel',
             ]);
 
             if ($validate2->fails()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => $validate2->errors()
+                    'message' => $validate->errors()
                 ], Response::HTTP_BAD_REQUEST);
             }
 
             $validated2 = $validate2->validated();
 
             DB::beginTransaction();
-            $hs->status = $validated2['status'];
+            $hs->status = isset($validated2['status']) ? $validated2['status'] : $hs->status;
             $hs->save();
-
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Data riwayat langganan berhasil diperbarui',
+                'message' => 'Data riwayat langganan berhasil diubah',
                 'data' => $hs
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
