@@ -141,18 +141,19 @@ class NotificationController extends Controller
 
             $notification = Notification::findOrFail($id);
 
-            if (!$notification) {
+            // Cek jika request kosong
+            if (empty($request->all())) {
                 return response()->json([
-                    'message' => 'Data notifikasi tidak ditemukan'
-                ], Response::HTTP_NOT_FOUND);
+                    'message' => 'Tidak ada data yang dikirim untuk diperbarui'
+                ], Response::HTTP_BAD_REQUEST);
             }
 
-
+            // Validasi hanya untuk field yang dikirim dalam request
             $validator = Validator::make($request->all(), [
-                'title' => 'string',
-                'description' => 'string',
-                'publish_date' => 'date',
-                'status' => 'in:publish,unpublish|default:publish'
+                'title' => 'sometimes|string',
+                'description' => 'sometimes|string',
+                'publish_date' => 'sometimes|date',
+                'status' => 'sometimes|in:publish,unpublish'
             ]);
 
             if ($validator->fails()) {
@@ -162,6 +163,7 @@ class NotificationController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
+            // Ambil hanya field yang tervalidasi dan ada di request
             $validated = $validator->validated();
             $notification->update($validated);
 
@@ -179,6 +181,7 @@ class NotificationController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Remove the specified resource from storage.
