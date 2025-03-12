@@ -266,11 +266,11 @@ class SubscriptionsController extends Controller
 
             // Validasi input pengguna
             $validate = Validator::make($request->all(), [
-                'title' => 'string|max:100',
-                'image_subscriptions' => 'image|mimes:jpeg,png,jpg|max:2048',
-                'price' => 'integer',
-                'period' => 'integer',
-                'description' => 'string',
+                'title' => 'sometimes|string|max:100',
+                'image_subscriptions' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+                'price' => 'sometimes|integer',
+                'period' => 'sometimes|integer',
+                'description' => 'sometimes|string',
             ]);
 
             if ($validate->fails()) {
