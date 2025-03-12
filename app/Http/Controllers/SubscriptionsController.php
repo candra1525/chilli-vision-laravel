@@ -17,7 +17,7 @@ class SubscriptionsController extends Controller
     {
         try {
             $supabase = new SupabaseService();
-            $subs = Subscriptions::all();
+            $subs = Subscriptions::orderBy('updated_at', 'desc')->get();
 
             // Jika $subs kosong
             if ($subs->isEmpty()) {
@@ -157,9 +157,99 @@ class SubscriptionsController extends Controller
     }
 
     // Update Subscription
+    // public function update(Request $request, string $id)
+    // {
+    //     try {
+    //         $validate = Validator::make(['id' => $id], [
+    //             'id' => 'required|exists:subscriptions,id'
+    //         ]);
+
+    //         if ($validate->fails()) {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => $validate->errors()
+    //             ], Response::HTTP_BAD_REQUEST);
+    //         }
+
+    //         $validated = $validate->validated();
+
+    //         $subs = Subscriptions::findOrFail($validated['id']);
+
+    //         if ($subs) {
+    //             $validate = Validator::make($request->all(), [
+    //                 'title' => 'string|max:100',
+    //                 'image_subscriptions' => 'image|mimes:jpeg,png,jpg|max:2048',
+    //                 'price' => 'integer',
+    //                 'period' => 'integer',
+    //                 'description' => 'string',
+    //             ]);
+
+    //             if ($validate->fails()) {
+    //                 return response()->json([
+    //                     'status' => 'error',
+    //                     'message' => $validate->errors()
+    //                 ], Response::HTTP_BAD_REQUEST);
+    //             }
+
+    //             $validated = $validate->validated();
+
+    //             DB::beginTransaction();
+    //             $supabase = new SupabaseService();
+
+    //             $filename = $subs->image_subscriptions;
+    //             $response = ['url_image' => $supabase->getImageSubscription($filename)];
+
+    //             if ($request->hasFile('image_subscriptions')) {
+    //                 $file = $request->file('image_subscriptions');
+    //                 $filename = 'subscriptions_' . time() . '.' . $file->getClientOriginalExtension();
+
+    //                 $response = $supabase->uploadImageSubscription($file, $filename);
+
+    //                 if (isset($response['error'])) {
+    //                     return response()->json([
+    //                         'status' => 'error',
+    //                         'message' => 'Error uploading image: ' . $response['error']
+    //                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    //                 }
+
+    //                 $subs->image_subscriptions = $filename;
+    //             }
+
+    //             $subs->title = $validated['title'] ?? $subs->title;
+    //             $subs->image_subscriptions = $filename;
+    //             $subs->price = $validated['price'] ?? $subs->price;
+    //             $subs->description = $validated['description'] ?? $subs->description;
+
+    //             $subs->save();
+
+    //             $subs->image_url = $response['url_image'];
+
+    //             DB::commit();
+
+    //             return response()->json([
+    //                 'status' => 'success',
+    //                 'message' => 'Data langganan berhasil diperbarui',
+    //                 'data' => $subs
+    //             ], Response::HTTP_OK);
+    //         } else {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => 'Data langganan tidak ditemukan'
+    //             ], Response::HTTP_NOT_FOUND);
+    //         }
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Error: ' . $e->getMessage()
+    //         ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    //     }
+    // }
+
     public function update(Request $request, string $id)
     {
         try {
+            // Validasi ID langganan
             $validate = Validator::make(['id' => $id], [
                 'id' => 'required|exists:subscriptions,id'
             ]);
@@ -171,73 +261,78 @@ class SubscriptionsController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            $validated = $validate->validated();
+            // Ambil data langganan berdasarkan ID
+            $subs = Subscriptions::findOrFail($id);
 
-            $subs = Subscriptions::findOrFail($validated['id']);
+            // Validasi input pengguna
+            $validate = Validator::make($request->all(), [
+                'title' => 'string|max:100',
+                'image_subscriptions' => 'image|mimes:jpeg,png,jpg|max:2048',
+                'price' => 'integer',
+                'period' => 'integer',
+                'description' => 'string',
+            ]);
 
-            if ($subs) {
-                $validate = Validator::make($request->all(), [
-                    'title' => 'string|max:100',
-                    'image_subscriptions' => 'image|mimes:jpeg,png,jpg|max:2048',
-                    'price' => 'integer',
-                    'period' => 'integer',
-                    'description' => 'string',
-                ]);
-
-                if ($validate->fails()) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => $validate->errors()
-                    ], Response::HTTP_BAD_REQUEST);
-                }
-
-                $validated = $validate->validated();
-
-                DB::beginTransaction();
-                $supabase = new SupabaseService();
-
-                $filename = $subs->image_subscriptions;
-                $response = ['url_image' => $supabase->getImageSubscription($filename)];
-
-                if ($request->hasFile('image_subscriptions')) {
-                    $file = $request->file('image_subscriptions');
-                    $filename = 'subscriptions_' . time() . '.' . $file->getClientOriginalExtension();
-
-                    $response = $supabase->uploadImageSubscription($file, $filename);
-
-                    if (isset($response['error'])) {
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Error uploading image: ' . $response['error']
-                        ], Response::HTTP_INTERNAL_SERVER_ERROR);
-                    }
-
-                    $subs->image_subscriptions = $filename;
-                    // $subs->image_url = $response['url_image'];
-                }
-
-                $subs->title = $validated['title'] ?? $subs->title;
-                $subs->image_subscriptions = $filename;
-                $subs->price = $validated['price'] ?? $subs->price;
-                $subs->description = $validated['description'] ?? $subs->description;
-
-                $subs->save();
-
-                $subs->image_url = $response['url_image'];
-
-                DB::commit();
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Data langganan berhasil diperbarui',
-                    'data' => $subs
-                ], Response::HTTP_OK);
-            } else {
+            if ($validate->fails()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Data langganan tidak ditemukan'
-                ], Response::HTTP_NOT_FOUND);
+                    'message' => $validate->errors()
+                ], Response::HTTP_BAD_REQUEST);
             }
+
+            $validated = $validate->validated();
+            $supabase = new SupabaseService();
+
+            DB::beginTransaction();
+
+            $filename = $subs->image_subscriptions;
+            $response = ['url_image' => $supabase->getImageSubscription($filename)];
+
+            // Jika ada file gambar baru yang diunggah
+            if ($request->hasFile('image_subscriptions')) {
+                // Hapus gambar lama dari storage Supabase jika ada
+                if (!empty($subs->image_subscriptions)) {
+                    $deleteResponse = $supabase->deleteImageSubscription($subs->image_subscriptions);
+                    if (isset($deleteResponse['error'])) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Error deleting old image: ' . $deleteResponse['error']
+                        ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                    }
+                }
+
+                // Simpan gambar baru
+                $file = $request->file('image_subscriptions');
+                $filename = 'subscriptions_' . time() . '.' . $file->getClientOriginalExtension();
+                $response = $supabase->uploadImageSubscription($file, $filename);
+
+                if (isset($response['error'])) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Error uploading image: ' . $response['error']
+                    ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+
+                $subs->image_subscriptions = $filename;
+            }
+
+            // Update data
+            $subs->update([
+                'title' => $validated['title'] ?? $subs->title,
+                'image_subscriptions' => $filename,
+                'price' => $validated['price'] ?? $subs->price,
+                'description' => $validated['description'] ?? $subs->description,
+            ]);
+
+            $subs->image_url = $response['url_image'];
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data langganan berhasil diperbarui',
+                'data' => $subs
+            ], Response::HTTP_OK);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -246,6 +341,7 @@ class SubscriptionsController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Delete Subscription (Soft Delete)
     public function destroy(string $id)

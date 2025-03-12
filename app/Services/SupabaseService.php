@@ -64,6 +64,35 @@ class SupabaseService
             return "{$this->url}/storage/v1/object/public/{$this->bucket_subscription}/{$fileName}";
       }
 
+      public function deleteImageSubscription($fileName)
+      {
+            $baseUrl = $this->url;
+            $path = "{$this->bucket_subscription}/{$fileName}";
+
+            try {
+                  if (!$baseUrl) {
+                        throw new \Exception('Base URL for Supabase is not configured.');
+                  }
+
+                  // Kirim permintaan DELETE ke Supabase
+                  $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $this->key,
+                  ])->delete("{$baseUrl}/storage/v1/object/{$path}");
+
+                  Log::info('Supabase Delete Response:', ['response' => $response->body()]);
+
+                  if ($response->failed()) {
+                        throw new \Exception('Error deleting file: ' . $response->body());
+                  }
+
+                  return ['status' => 'success', 'message' => 'File deleted successfully'];
+            } catch (\Exception $e) {
+                  Log::error('Error deleting from Supabase:', ['message' => $e->getMessage()]);
+                  return ['status' => 'error', 'message' => $e->getMessage()];
+            }
+      }
+
+
       // User
       public function uploadImageUser($file, $filename)
       {
