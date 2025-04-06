@@ -235,6 +235,7 @@ class HistoriesController extends Controller
             $validate = Validator::make($request->all(), [
                 'image' => 'required|string',
                 'detection_time' => 'required|string|max:100',
+                'unique_name_disease' => 'required|string|max:255',
                 "history_details" => 'required|array',
                 'history_details.*.name_disease' => 'required|string|max:255',
                 'history_details.*.another_name_disease' => 'required|string|max:255',
@@ -259,6 +260,7 @@ class HistoriesController extends Controller
             $history = new Histories();
             $history->detection_time = $validated['detection_time'];
             $history->image = $validated['image'];
+            $history->unique_name_disease = $validated['unique_name_disease'];
             $history->user_id = $validated['user_id'];
             $history->save();
 
