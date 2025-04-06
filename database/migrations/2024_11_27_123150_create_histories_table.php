@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('image')->nullable();
             $table->string('detection_time');
+            $table->string('unique_name_disease');
             $table->softDeletes();
             $table->timestamps();
         });

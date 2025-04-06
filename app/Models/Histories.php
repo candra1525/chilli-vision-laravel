@@ -14,7 +14,7 @@ class Histories extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['id', 'image', 'detection_time', 'user_id'];
+    protected $fillable = ['id', 'image', 'detection_time', 'unique_name_disease', 'user_id'];
     protected $table = 'histories';
 
     public function user()
