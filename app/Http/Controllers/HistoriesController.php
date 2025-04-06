@@ -361,7 +361,7 @@ class HistoriesController extends Controller
 
             $validated = $validate->validated();
 
-            $history = Histories::where('id', $validated['id'])->first();
+            $history = Histories::with('historyDetail')->where('id', $validated['id'])->first();
 
             return response()->json([
                 'status' => 'success',
