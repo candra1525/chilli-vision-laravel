@@ -8,22 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
-class Histories extends Model
+class HistoryDetails extends Model
 {
     use HasFactory, SoftDeletes, HasApiTokens, HasUuids;
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['id', 'image', 'detection_time', 'user_id'];
-    protected $table = 'histories';
+    protected $fillable = ['id', 'name_disease', 'another_name_disease', 'symptom', 'reason', 'preventive_measure', 'source', 'confidence_score', 'history_id'];
+    protected $table = 'history_details';
 
-    public function user()
+    public function history()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function historyDetail()
-    {
-        return $this->hasMany(HistoryDetails::class, 'history_id', 'id');
+        return $this->belongsTo(Histories::class, 'history_id', 'id');
     }
 }

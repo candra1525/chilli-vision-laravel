@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('histories', function (Blueprint $table) {
+        Schema::create('history_details', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('image')->nullable();
-            $table->string('detection_time');
+            $table->string('name_disease');
+            $table->string('another_name_disease');
+            $table->text('symptom');
+            $table->text('reason');
+            $table->text('preventive_measure');
+            $table->string('source');
+            $table->string('confidence_score');
             $table->softDeletes();
             $table->timestamps();
         });
@@ -25,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('histories');
+        Schema::dropIfExists('history_details');
     }
 };
