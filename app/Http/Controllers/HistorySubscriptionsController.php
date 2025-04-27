@@ -163,12 +163,12 @@ class HistorySubscriptionsController extends Controller
                 ->where('status', '!=', 'active')
                 ->orderBy('created_at', 'desc')->get();
 
-            if ($hs->isEmpty()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Anda belum berlangganan'
-                ], Response::HTTP_NOT_FOUND);
-            }
+            // if ($hs->isEmpty()) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'Anda belum berlangganan'
+            //     ], Response::HTTP_NOT_FOUND);
+            // }
 
             foreach ($hs as $h) {
                 $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
@@ -211,12 +211,12 @@ class HistorySubscriptionsController extends Controller
                 ->where('status', 'active')
                 ->orderBy('created_at', 'desc')->get();
 
-            if ($hs->isEmpty()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Tidak ada langganan aktif'
-                ], Response::HTTP_NOT_FOUND);
-            }
+            // if ($hs->isEmpty()) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'Tidak ada langganan aktif'
+            //     ], Response::HTTP_NOT_FOUND);
+            // }
 
             foreach ($hs as $h) {
                 $h->image_url = $supabase->getImageHistorySubscription($h->image_transaction);
