@@ -243,7 +243,6 @@ class HistoriesController extends Controller
                 'history_details.*.reason' => 'required|string',
                 'history_details.*.preventive_meansure' => 'required|string',
                 'history_details.*.source' => 'required|string',
-                'history_details.*.confidence_score' => 'required|string|max:100',
                 'user_id' => 'required|exists:users,id|string',
             ]);
 
@@ -273,7 +272,6 @@ class HistoriesController extends Controller
                 $historyDetails->reason = $detail['reason'];
                 $historyDetails->preventive_measure = $detail['preventive_meansure'];
                 $historyDetails->source = $detail['source'];
-                $historyDetails->confidence_score = $detail['confidence_score'];
                 $historyDetails->history_id = $history->id;
                 $historyDetails->save();
             }
