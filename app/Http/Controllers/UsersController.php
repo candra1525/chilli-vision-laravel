@@ -700,12 +700,12 @@ class UsersController extends Controller
                 ->limit(1)
                 ->first();
 
-            if (!$activeSubscription) {
-                return response()->json([
-                    'status' => 'failed',
-                    'message' => 'Tidak ada langganan yang aktif'
-                ], Response::HTTP_NOT_FOUND);
-            }
+            // if (!$activeSubscription) {
+            //     return response()->json([
+            //         'status' => 'failed',
+            //         'message' => 'Tidak ada langganan yang aktif'
+            //     ], Response::HTTP_NOT_FOUND);
+            // }
 
             return response()->json([
                 'status' => 'success',
