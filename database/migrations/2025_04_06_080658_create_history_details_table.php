@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('history_details', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name_disease');
-            $table->string('another_name_disease');
-            $table->text('symptom');
-            $table->text('reason');
-            $table->text('preventive_measure');
-            $table->string('source');
-            $table->string('confidence_score');
+            $table->string('name_disease'); // Nama Penyakit
+            $table->string('another_name_disease'); // Nama Lain Penyakit
+            $table->text('symptom'); // Gejala
+            $table->text('reason'); // Penyebab
+            $table->text('preventive_measure'); // Tindakan Pencegahan
+            $table->string('source'); // Sumber
             $table->softDeletes();
             $table->timestamps();
         });
