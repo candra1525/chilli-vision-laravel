@@ -408,9 +408,9 @@ class UsersController extends Controller
                         'history_subscriptions' => function ($query) {
                             $query->where('status', 'active')
                                   ->latest('created_at')
-                                  ->limit(1);
-                        },
-                        'history_subscriptions.subscriptions' // ← ini bagian untuk nested eager load
+                                  ->limit(1)
+                                  ->with('subscriptios');
+                        }
                     ])->where('no_handphone', $no_handphone)->first();
                     
                 }
