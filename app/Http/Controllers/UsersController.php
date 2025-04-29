@@ -700,6 +700,7 @@ class UsersController extends Controller
                 ->where('status', 'active')
                 ->latest('created_at')
                 ->limit(1)
+                ->with('subscriptions')
                 ->first();
 
             // if (!$activeSubscription) {

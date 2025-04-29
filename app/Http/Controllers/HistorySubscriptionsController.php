@@ -565,7 +565,8 @@ class HistorySubscriptionsController extends Controller
             if (!$hs) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Data langganan tidak ditemukan'
+                    'message' => 'Data tidak ada',
+                    'data' => null
                 ], Response::HTTP_OK);
             }
 
@@ -579,7 +580,6 @@ class HistorySubscriptionsController extends Controller
 
             $hs->remaining = $now->diffInDays($end_date, false);
             $hs->remaining = intval($hs->remaining);
-
 
             return response()->json([
                 'status' => 'success',
