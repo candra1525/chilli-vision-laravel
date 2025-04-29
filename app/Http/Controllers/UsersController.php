@@ -385,6 +385,7 @@ class UsersController extends Controller
             $user = User::with([
                 'history_subscriptions' => function ($query) {
                     $query->where('status', 'active')
+                        ->with('subscriptions')
                         ->latest('created_at')
                         ->limit(1);
                 }
@@ -407,12 +408,11 @@ class UsersController extends Controller
                     $user = User::with([
                         'history_subscriptions' => function ($query) {
                             $query->where('status', 'active')
-                                  ->latest('created_at')
-                                  ->limit(1)
-                                  ->with('subscriptios');
+                                ->with('subscriptions')
+                                ->latest('created_at')
+                                ->limit(1);
                         }
                     ])->where('no_handphone', $no_handphone)->first();
-                    
                 }
             }
 
