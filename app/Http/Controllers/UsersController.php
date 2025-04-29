@@ -379,7 +379,7 @@ class UsersController extends Controller
             }
 
             $validated = $validator->validated();
-            $username = $validated['no_handphone'];
+            $no_handphone = $validated['no_handphone'];
             $password = $validated['password'];
 
             $user = User::with([
@@ -388,7 +388,7 @@ class UsersController extends Controller
                         ->latest('created_at')
                         ->limit(1);
                 }
-            ])->where('no_handphone', $username)->first();
+            ])->where('no_handphone', $no_handphone)->first();
 
             if ($user && $user->history_subscriptions->isNotEmpty()) {
                 $latestHistory = $user->history_subscriptions->first();
@@ -407,10 +407,12 @@ class UsersController extends Controller
                     $user = User::with([
                         'history_subscriptions' => function ($query) {
                             $query->where('status', 'active')
-                                ->latest('created_at')
-                                ->limit(1);
-                        }
-                    ])->where('no_handphone', $username)->first();
+                                  ->latest('created_at')
+                                  ->limit(1);
+                        },
+                        'history_subscriptions.subscriptions' // ← ini bagian untuk nested eager load
+                    ])->where('no_handphone', $no_handphone)->first();
+                    
                 }
             }
 
@@ -455,7 +457,7 @@ class UsersController extends Controller
             } else {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'Username atau password salah'
+                    'message' => 'No Handphone atau password salah'
                 ], Response::HTTP_UNAUTHORIZED);
             }
         } catch (\Exception $e) {
