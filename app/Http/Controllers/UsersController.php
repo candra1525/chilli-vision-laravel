@@ -700,15 +700,7 @@ class UsersController extends Controller
                 ->where('status', 'active')
                 ->latest('created_at')
                 ->limit(1)
-                ->with('subscriptions')
                 ->first();
-
-            // if (!$activeSubscription) {
-            //     return response()->json([
-            //         'status' => 'failed',
-            //         'message' => 'Tidak ada langganan yang aktif'
-            //     ], Response::HTTP_NOT_FOUND);
-            // }
 
             return response()->json([
                 'status' => 'success',
