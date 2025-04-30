@@ -696,7 +696,8 @@ class UsersController extends Controller
     {
         try {
             // Cari ke history subscription yang statusnya active berdasarkan id User
-            $activeSubscription = HistorySubscriptions::where('user_id', $id)
+            $activeSubscription = HistorySubscriptions::with('subscriptions')
+                ->where('user_id', $id)
                 ->where('status', 'active')
                 ->latest('created_at')
                 ->limit(1)
