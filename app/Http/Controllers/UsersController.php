@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HistorySubscriptions;
+use App\Models\Subscriptions;
 use App\Models\User;
 use App\Services\SupabaseService;
 use Carbon\Carbon;
@@ -503,6 +504,25 @@ class UsersController extends Controller
             $validated['image'] = null;
             $validated['password'] = bcrypt($validated['password']);
             $user = User::create($validated);
+
+
+            // Cari paket Reguler
+            $regularPackage = Subscriptions::where('title', 'Paket Reguler')->first();
+            if (!$regularPackage) {
+                throw new \Exception('Paket Reguler tidak ditemukan');
+            }
+
+            // Trial 7 hari
+            HistorySubscriptions::create([
+                'id' => Str::uuid(),
+                'user_id' => $user->id,
+                'subscription_id' => $regularPackage->id,
+                'start_date' => Carbon::now()->toDateString(),
+                'end_date' => Carbon::now()->addDays(7)->toDateString(),
+                'status' => 'active',
+                'payment_method' => 'trial',
+                'image_transaction' => null // Kosong karena trial
+            ]);
 
             DB::commit();
 
